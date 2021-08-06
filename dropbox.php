@@ -554,7 +554,7 @@ function db_mkdir($data,$folder) {
 }
 function isDate($value) 
 {
-	echo "[ $value ]".cr;
+	//echo "[ $value ]".cr;
 	//echo strtotime($value." 18:11").cr;
 	$test =date_parse_from_format(SETTINGS['DATE_FORMAT'], $value);
 	//print_r($test);
