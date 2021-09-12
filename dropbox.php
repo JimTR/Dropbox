@@ -11,7 +11,6 @@ include 'inc/master.inc.php';
 	 define('TERM',false);
  }
 define('cr',PHP_EOL);
-define ('SETTINGS',$settings);
 define ('API_OAUTH_TOKEN',"https://api.dropbox.com/oauth2/token");
 define('API_OAUTH_AUTHORIZE',"https://www.dropbox.com/oauth2/authorize");
 define('API_LONGPOLL_FOLDER',"https://notify.dropboxapi.com/2/files/list_folder/longpoll");
@@ -36,7 +35,12 @@ define('API_SAVEURL_JOBSTATUS_URL',"https://api.dropboxapi.com/2/files/save_url/
 define('API_SEARCH_URL',"https://api.dropboxapi.com/2/files/search");
 define('APP_CREATE_URL',"https://www.dropbox.com/developers/apps");
 $version = 1.07;
-$options = getopt("a:f:b:d:c:u:p:o:l:t:x:");
+	$build = "32460-2752354148";
+	$shortopts ="a:f:b:d:c:u:p:o:l:t:x:";
+	$longopts[]="debug::";
+	$longopts[]="help::";
+$options = getopt($shortopts,$longopts);
+
 /*
  * option a  = action
  * option b = backup path
@@ -61,9 +65,16 @@ if (TERM === false) {
 else {
 	// terminal options
 	$cc = new Color();
+	system("clear");
 }
-echo 'DropBox Uploader '.$version.cr;
-
+echo "DropBox Uploader  V$version ($build)".cr;
+if (isset($options['debug'])) {
+	echo 'DEBUG MODE'.cr;
+	define('debug',true);
+}
+else {
+	define('debug',false);
+}
 if (isset($options['f'])) {
 	switch ($options['f']) {
 		case 'local':
@@ -114,7 +125,7 @@ if (isset($options['a'])) {
 			else {
 				$user['email_verified'] == 'No';
 			}
-			echo 'Dropbox Information'.cr;
+			//echo 'Dropbox Information'.cr;
 			$table = new Table(CONSOLE_TABLE_ALIGN_RIGHT, CONSOLE_TABLE_BORDER_ASCII, 1, null, true);
 			$table->addRow(array($cc->convert("%YUser%n"),$user['name']['display_name']));
 			$table->addRow(array($cc->convert("%YEmail Address%n"),$user['email']));
@@ -164,6 +175,9 @@ if (isset($options['a'])) {
 			case 'space':
 			db_space($token,true);
 			exit;
+			case  't':
+				echo "file check".cr;
+				exit;
 			case 'x':
 				db_setup();
 				exit;
@@ -194,6 +208,7 @@ if (isset($options['a'])) {
 			$table->addRow(array($cc->convert("%Y-p%n"),'uses a dropbox path','-f'));
 			$table->addRow(array($cc->convert("%Y-u%n"),'filename to upload to dropbox requires full path','-f -p'));
 			$table->addRow(array($cc->convert("%Y-o%n"),'overwrite existing file, if blank/not set file is overwritten ','-au -u'));
+			$table->addRow(array($cc->convert("%Y--debug%n"),'print debug output to terminal ','used with any other option'));
 			echo $table->getTable();
 		
 	
@@ -284,13 +299,15 @@ function db_list_files($data,$path='' ) {
 		
 	
 if(isset($y['entries'])){	
-	
+	$total_size=0;
 	foreach ($y['entries'] as $entry) {
+		//echo print_r($entry,true).cr;
 		if ($entry['.tag'] == 'file') {
 			$path_parts = pathinfo($entry['path_display']);
 			//echo 'path parts'.cr.print_r($path_parts,true).cr;
 			$basename = $path_parts['basename'];
 		//echo $entry['.tag'].' '.$path_parts['basename'].' '. formatBytes($entry['size'],2).cr;
+		$total_size  +=$entry['size'];
 		$table->addRow(array($entry['.tag'], $cc->convert("%b$basename%n"),trim(formatBytes($entry['size'],2)),date('d-m-Y  H:i:s',strtotime($entry['server_modified']))));
 	}
 		else {
@@ -302,8 +319,14 @@ if(isset($y['entries'])){
 		 }
 	}
 	if(!isset($options['t'])){
+		 
 		echo cr.'Contents of '.$cc->convert("%y".substr($path,1)."%n").cr;
+		if ($total_size >0 || !isset($total_size)) {
+				$total_size = formatBytes($total_size,2);
+				$table->addRow(array('Total','',$cc->convert("%Y$total_size%n"),''));
+			}
 		echo $table->getTable();
+		
 	}
 	return $y['entries'];
 }
@@ -461,7 +484,8 @@ function db_delete($data,$folder) {
 
 function split_file($source, $targetpath='./logs/'){
 	//echo "target_path= $targetpath".cr;
-	//echo "\033[1K/r";
+	//echo "\033[1K";
+	//die($source);
 	if (!file_exists($targetpath)) {
     mkdir($targetpath, 0777, true);
 }
@@ -469,45 +493,47 @@ else {
 	// clean up if required function crashed last time around ?
 	$tmp_files = array_values(array_diff(scandir($targetpath), array('..', '.')));
 	if( count($tmp_files)){
-		//echo 'Cleaning up tempory folder'.cr;
+		if (debug == true) { 
+			echo "Cleaning up tempory folder $targetpath".cr;
+		}
 			foreach ($tmp_files as $erase) {
 				unlink($targetpath.'/'.$erase);
-				//echo "Removing $erase".cr;
+				if (debug == true) { 
+					echo "Removing $erase".cr;
+				}
 			}
 		
 	}
 }
+$cd = getcwd();
+if (!is_file($source)) {
+	echo "can not find $source !".cr;
+}
 	$targetpath .= '/';
-    $j='01';
-    $buffer='';
-	$handle = gzopen ($source, "rb");
-	//echo "\r";
-	//echo "\033[K";
-	$u_file =pathinfo($source,PATHINFO_FILENAME);
-	echo "$u_file writing chunks ";
-    while (!feof ($handle)) {
-		    $buffer = fread($handle,157286400 );
-            $fname = $targetpath."part".$j;
-            
-            if (!$fhandle = gzopen($fname, 'w')) {
-                echo "\033[KCannot open file ($fname)\r";
-                exit;
-            }
-			
-            if (!fwrite($fhandle, $buffer)) {
-                echo "\033[KCannot write to file ($fname)\r";
-                exit;
-            }
-            echo "*";
-            gzclose($fhandle);
-            $j++;
-            if(intval($j) <= 9) {$j = '0'.$j;}
-           
-            $i=0;
-      
-    }
-    fclose ($handle);
-    echo cr;
+    	//echo "\033[K";
+		$path_parts = pathinfo($source);
+	
+	if (debug == true) { 
+		echo "current working directory $cd".cr;
+		echo "chunk target path $targetpath".cr;
+		echo 'File break down '.cr;
+		foreach ($path_parts as $k=> $v) {
+			echo $k.'=>'.$v.cr;
+		}
+		echo "writing chunks from $source ".cr;
+		
+	}
+  
+	
+   if (SETTINGS['CHUNK_SIZE'] >= 150) {
+	   echo 'can not split '.$path_parts['basename'].' !'.cr;
+	   echo 'chunk size is too large, correct your settings'.cr;
+	   die('closing down'.cr);
+   }
+    exec('split -b '.SETTINGS['CHUNK_SIZE'].'M '.$source.' "'.$targetpath.$path_parts['basename'].'.part"',$a,$r);
+    //print_r(scandir($targetpath));
+    //echo "source = $source target path = $targetpath current directory =$cd".cr;
+    //die();
     
 }
 function db_mkdir($data,$folder) {
@@ -554,7 +580,7 @@ function db_mkdir($data,$folder) {
 }
 function isDate($value) 
 {
-	//echo "[ $value ]".cr;
+	echo "[ $value ]".cr;
 	//echo strtotime($value." 18:11").cr;
 	$test =date_parse_from_format(SETTINGS['DATE_FORMAT'], $value);
 	//print_r($test);
@@ -613,6 +639,7 @@ function db_upload_directory($data,$folder,$directory) {
 	 $total_size = 0;
 	 $start_time = time(); // get current timestamp 
 	 $content = dirToArray($directory); // get file list
+	 asort($content);
 	 $total_files = count($content);
 	 $file_count = 0;
 	 echo "$total_files  file(s) to upload".cr;
@@ -658,6 +685,9 @@ function db_upload_directory($data,$folder,$directory) {
 		if ($size >= 157286400) {
 			// large file chunk it !
 			$hsize = formatBytes($size,2);
+			if(debug == true) {
+				echo 'entering split_file function'.cr;
+			}
 			split_file($file,'/tmp/dbtmp'); // create chunks
 			unset($headr);
 			$headr[] = 'Authorization: Bearer '.$data['access_token'];
@@ -671,27 +701,26 @@ function db_upload_directory($data,$folder,$directory) {
 			curl_close($ch);
 			$session_id = $ids['session_id'];
 			$chunks = array_values(array_diff(scandir('/tmp/dbtmp'), array('..', '.')));
-			if (TERM) {
-				echo "\033[K";
-				echo count($chunks)." chunks to upload \r";
-			}
-			else {
+			if (debug == true) {
 				echo count($chunks).' chunks to upload'.cr;
 			}
+			//print_r($chunks);
+			//die();
 			$offset = 0;
+			$chunk_num= 0;
 			foreach ($chunks as  $chunk) {
+				$data= db_check_token(); 
 				unset ($headr);
-				$fp = gzopen('/tmp/dbtmp/'.$chunk, 'rb');
+				$chunk_num++;
+				$fp = fopen('/tmp/dbtmp/'.$chunk, 'rb');
 				$csize = filesize('/tmp/dbtmp/'.$chunk);
-				
-				$chunk_no = substr($chunk,4);
-				if(TERM) {
-					echo "\033[K";
-					echo "Uploading $file  $chunk_no of ".count($chunks)."\r";
-					}
-					else {
-					echo "Uploading $file  $chunk_no of ".count($chunks).cr;
+				$dsize = formatBytes($csize,2);
+				$chunk_base = pathinfo($chunk,PATHINFO_FILENAME);
+				echo "$file_count/$total_files Uploading $chunk_base ";
+				if (debug == true) {
+					echo "Upload Size $dsize ";
 				}
+				echo "($chunk_num/".count($chunks).")";
 				$headr[] = 'Authorization: Bearer '.$data['access_token'];
 				$headr[] ='Content-Type: application/octet-stream';
 				$headr[] = "Dropbox-API-Arg: {\"cursor\": {\"session_id\": \"$session_id\",\"offset\": $offset},\"close\": false}";
@@ -702,47 +731,66 @@ function db_upload_directory($data,$folder,$directory) {
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 				curl_setopt($ch, CURLOPT_INFILE, $fp);
 				curl_setopt($ch, CURLOPT_INFILESIZE, $csize);
-				curl_exec($ch);
-				gzclose($fp);
+				$response = json_decode(curl_exec($ch),true);
+				if (!empty($response)  ) {
+					echo "response ".print_r($response,true).cr;
+				}
+				fclose($fp);
+				curl_close($ch);
 				$offset = $offset+$csize;
 				$hoffset = formatBytes($offset,2);
-				if(TERM) {
-					echo "\033[K";
-					echo " $hoffset of $hsize uploaded";
-				}
-				else{
-					echo " $hoffset of $hsize uploaded".cr;
+				echo " $hoffset of $hsize uploaded".cr;
+				if(debug == true) {
+					
+					echo "$chunk Headers".cr;
+					foreach ($headr as $header){
+					echo $header.cr;
+					}
 				}
 				sleep(1);
-				//echo time() - $start_time.cr;
 			}
+				
 				unset ($headr);
+				
+				if (debug == true) {
+					echo "folder= $folder path =$path".cr;
+				}
 				$headr[] = 'Authorization: Bearer '.$data['access_token'];
 				$headr[] ='Content-Type: application/octet-stream';
 				$headr[] = "Dropbox-API-Arg: {\"cursor\": {\"session_id\": \"$session_id\",\"offset\": $offset},\"commit\": {\"path\": \"$upload_path\",\"mode\": \"overwrite\",\"autorename\": true,\"mute\": false}}";
-				if(TERM) {
-					echo "\033[K";
-					echo "finalising $upload_path";
-				}
-				else {
-					echo "finalising $upload_path".cr;
-				}
+			
 				$ch = curl_init(API_CHUNKED_UPLOAD_FINISH_URL);
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
 				curl_setopt($ch, CURLOPT_PUT, true);
 				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 				$response = json_decode(curl_exec($ch),true);
-				//echo print_r($response,true); do something with this
+				if(debug == true){
+					echo "finalising $upload_path".cr;
+					echo "offset is set to $offset overall file set to $size";
+					if ($offset == $size) {
+						echo 'match'.cr;
+					}
+					else {
+						echo 'File has not uploaded correctly';
+					}
+					echo "Headers Sent".cr;
+					foreach ($headr as $header){
+					echo $header.cr;
+					}
+					echo 'Final Response '.cr ; //do something with this
+						foreach ($response as $k => $v) {
+							echo $k.' => '.$v.cr;
+						} 
+				}
 				rrmdir('/tmp/dbtmp'); // clean up
-						
 			
 		}
 		else {
 			// regular upload
 			unset($headr);
 			if(TERM){echo "\033[K";}
-			$fp = gzopen($file, 'rb');
+			$fp = fopen($file, 'rb');
 			$headr[] = 'Authorization: Bearer '.$data['access_token'];
 			$headr[] ='Content-Type: application/octet-stream';
 			$headr[] = 'Dropbox-API-Arg: {"path":"'.$upload_path.'", "mode":"overwrite"}';
@@ -754,8 +802,11 @@ function db_upload_directory($data,$folder,$directory) {
 			curl_setopt($ch, CURLOPT_INFILESIZE, $size);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$response = curl_exec($ch);
-			gzclose($fp); 
-			sleep(1);
+			
+			fclose($fp); 
+			sleep(1); 
+			$upload_path = "$folder/$db_path/". basename($file);
+			
 		}
 		
 		$total_size = $total_size+$size;
@@ -771,7 +822,7 @@ function db_upload_directory($data,$folder,$directory) {
 	if (isset($options['t'])) {
           //delete folders older then retention time
           db_delete($data,$folder); // delete old dropbox folders
-          rrmdir($directory); // remove local copy as we have it on dropbox
+          rrmdir($directory); // remove local copy of new transfer as we have it on dropbox
         }
 
 }
@@ -789,8 +840,16 @@ function db_upload_file($data,$folder,$file) {
 		$size = filesize($file);
 		$short_file = basename($file);
 		echo "Upload $short_file to dropbox $folder/$path ($size)".cr;
+		if (substr($path,0,1)== '/') {
+			$upload_path ="/$folder$path";
+		}
+		else{
 		$upload_path = "/$folder/$path";
+	}
 		if ($size >= 157286400) {
+			///echo "short_file = $short_file file= $file dest = $folder/$path".cr;
+			//exec("./dropbox_uploader.sh upload $short_file $folder/$path",$response,$ret);
+			//print_r($response);
 			// large file chunk it !
 			$hsize = formatBytes($size,2);
 			split_file($file,'/tmp/dbtmp'); // create chunks
@@ -805,17 +864,24 @@ function db_upload_file($data,$folder,$file) {
 			$ids = json_decode(curl_exec($ch),true);
 			curl_close($ch);
 			$session_id = $ids['session_id'];
-			$chunks = array_values(array_diff(scandir('tmp'), array('..', '.')));
+			$chunks = array_values(array_diff(scandir('/tmp/dbtmp'), array('..', '.')));
 			echo count($chunks).' chunks to upload'.cr;
+			//print_r($chunks);
+			//die();
 			$offset = 0;
+			$chunk_num= 0;
 			foreach ($chunks as  $chunk) {
+				$data= db_check_token(); 
 				unset ($headr);
-				$fp = gzopen('/tmp/dbtmp/'.$chunk, 'rb');
+				$chunk_num++;
+				$fp = fopen('/tmp/dbtmp/'.$chunk, 'rb');
 				$csize = filesize('/tmp/dbtmp/'.$chunk);
-				echo "Uploading $chunk ";
+				$dsize = formatBytes($csize,2);
+				echo "Uploading $chunk Upload Size $dsize ($chunk_num/".count($chunks).")".cr;
 				$headr[] = 'Authorization: Bearer '.$data['access_token'];
 				$headr[] ='Content-Type: application/octet-stream';
 				$headr[] = "Dropbox-API-Arg: {\"cursor\": {\"session_id\": \"$session_id\",\"offset\": $offset},\"close\": false}";
+				print_r($headr);
 				$ch = curl_init(API_CHUNKED_UPLOAD_APPEND_URL);
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
 				curl_setopt($ch, CURLOPT_PUT, true);
@@ -823,37 +889,54 @@ function db_upload_file($data,$folder,$file) {
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 				curl_setopt($ch, CURLOPT_INFILE, $fp);
 				curl_setopt($ch, CURLOPT_INFILESIZE, $csize);
-				echo curl_exec($ch);
-				gzclose($fp);
+				$response = json_decode(curl_exec($ch),true);
+				if (!empty($response)  ) {
+					echo "response ".print_r($response,true).cr;
+				}
+				fclose($fp);
+				curl_close($ch);
 				$offset = $offset+$csize;
 				$hoffset = formatBytes($offset,2);
 				echo "$hoffset of $hsize uploaded".cr;
 				sleep(1);
 			}
+				echo $chunk.cr; 
 				unset ($headr);
+				//$upload_path = "/$folder/$path";
+				echo "folder= $folder path =$path".cr;
+				
 				$headr[] = 'Authorization: Bearer '.$data['access_token'];
 				$headr[] ='Content-Type: application/octet-stream';
 				$headr[] = "Dropbox-API-Arg: {\"cursor\": {\"session_id\": \"$session_id\",\"offset\": $offset},\"commit\": {\"path\": \"$upload_path\",\"mode\": \"overwrite\",\"autorename\": true,\"mute\": false}}";
+				print_r($headr);
+				//die();
 				echo "finalising $upload_path".cr;
+				echo "offset is set to $offset overall file set to $size".cr;
+				//$fp = gzopen('/tmp/dbtmp/'.$chunk, 'rb');
+				//$csize = filesize('/tmp/dbtmp/'.$chunk);
 				$ch = curl_init(API_CHUNKED_UPLOAD_FINISH_URL);
 				curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
 				curl_setopt($ch, CURLOPT_PUT, true);
 				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				//curl_setopt($ch, CURLOPT_INFILE, $fp);
+				//curl_setopt($ch, CURLOPT_INFILESIZE, $csize);
 				$response = json_decode(curl_exec($ch),true);
-				//echo print_r($response,true); do something with this
+				//gzclose($fp);
+				echo 'Final Response '.print_r($response,true).cr; //do something with this
 				rrmdir('/tmp/dbtmp'); // clean up
 		
-			
+		
 		}
 		else {
 			// regular upload
 			unset($headr);
-			$fp = gzopen($file, 'rb');
+			
 			$headr[] = 'Authorization: Bearer '.$data['access_token'];
 			$headr[] ='Content-Type: application/octet-stream';
 			$headr[] = 'Dropbox-API-Arg: {"path":"'.$upload_path.'", "mode":"overwrite"}';
-			$ch = curl_init(API_UPLOAD_URL);
+			$fp = fopen($path, 'rb');
+			$size = filesize($file);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
 			curl_setopt($ch, CURLOPT_PUT, true);
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
@@ -861,11 +944,22 @@ function db_upload_file($data,$folder,$file) {
 			curl_setopt($ch, CURLOPT_INFILESIZE, $size);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$response = curl_exec($ch);
-			gzclose($fp); 
-			//sleep(1);
+			print_r (json_decode($response,true));
+			curl_close($ch);
+			fclose($fp);
+
+			
 		}
 }
+
+function db_download($data,$db_file,$local_file) {
+	/* download
+	 * $data = token
+	 * $db_file = remote file
+	 * $local_file = where to write to
+	*/
 	
+}	
 function db_setup() {
 	// setup
 	$header = "   DropBox Settings version 2.0";
