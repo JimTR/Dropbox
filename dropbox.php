@@ -17,7 +17,7 @@ include 'inc/master.inc.php';
  * option o = overwrite
  * option t = use time
  */ 
- log_to('debug.log',shell_exec('printenv')); //debug
+ log_to('debug.log',shell_exec('printenv')); //debug file
 if (TERM === false) {
 	log_to("debug.log",print_r($_SERVER,true));
 	if (isset($_SERVER['BACKUP_DEST'])) {
