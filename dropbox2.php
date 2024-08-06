@@ -149,7 +149,10 @@ function upload_file($folder,$file) {
 		$response = json_decode($response,true);
 		if (isset($response['name'])) {
 			//$bytes = trim(
-			if(TERM) {$short_file = cc->convert("%y$short_file%n"); }
+			if(TERM) {
+				$short_file = cc->convert("%y$short_file%n"); 
+				$file_info['upload_path'] = cc->convert("%g{$file_info['upload_path']}%n");
+			}
 			echo "$short_file uploaded to {$file_info['upload_path']} ({$file_info['bytes']})\n";
 		}
 		else{print_r($response);}
@@ -530,10 +533,6 @@ function correct_file($file,$folder){
 	//echo "constant = ".tld.cr;
 	if($tld_find>0){$return['upload_path'] =  "/$folder/".substr($file, $tld_find+(strlen(tld)+1));} // correct the path to dropbox path + the shortened file path
 	$return['upload_path'] = str_replace("//","/",$return['upload_path']);
-	//echo "upload path is {$return['upload_path']}\n";
-	//else {$return['upload_path'] =  "/$folder/".substr($file, $tld_find);} 
-	//print_r($return);
-	//die();
 	return $return;
 }	
 function info($print = false) {
