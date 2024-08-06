@@ -1334,3 +1334,61 @@ if (isset($cmds)) {
 	return $cmds;
 }
 }
+function arg($x="",$default=null,$preserve=true) {
+	
+    static $arginfo = [];
+    //echo "what is this ? $x\r\n";
+	//error_reporting(0);
+    /* helper */ $contains = function($h,$n) {return (false!==strpos($h,$n));};
+    /* helper */ $valuesOf = function($s) {return explode(",",$s);};
+
+    //  called with a multiline string --> parse arguments
+    if($contains($x,"\n")) {
+		//  parse multiline text input
+        $args = $GLOBALS["argv"] ?: [];
+        //$args = array_map('strtolower', $args); // everything lower case
+        $rows = preg_split('/\s*\n\s*/',trim($x));
+        $data = $valuesOf("char,word,type,help");
+        foreach($rows as $row) {
+			//$row=strtolower($row);
+            list($char,$word,$type,$help) = preg_split('/\s\s+/',$row);
+            $char = trim($char,"-");
+            $word = trim($word,"-");
+            $key  = $word ?: $char ?: ""; if($key==="") continue;
+            $arginfo[$key] = compact($data);
+            $arginfo[$key]["value"] = null;
+        }
+
+        $nr = 0;
+        while($args) {
+
+            $x = array_shift($args); if($x[0]<>"-") {$arginfo[$nr++]["value"]=$x;continue;}
+            $x = ltrim($x,"-");
+            $v = null; if($contains($x,"=")) list($x,$v) = explode("=",$x,2);
+            $k = "";foreach($arginfo as $k=>$arg) if(($arg["char"]==$x)||($arg["word"]==$x)) break;
+            $t = $arginfo[$k]["type"];
+            switch($t) {
+                case "bool" : $v = true; break;
+                case "str"  : if(is_null($v)) $v = array_shift($args); break;
+                case "int"  : if(is_null($v)) $v = array_shift($args); $v = intval($v); break;
+            }
+            if ($preserve === true) {
+				$arginfo[$k]["value"] = $v;
+			}
+			else {
+				
+				$arginfo[$k]["value"] = strtolower($v);
+            }
+
+        }
+		//error_reporting(err);
+        return $arginfo;
+
+    }
+	//error_reporting(err);
+    //  called with a question --> read argument value
+    if($x==="") return $arginfo;
+    if(isset($arginfo[$x]["value"])) return $arginfo[$x]["value"];
+    return $default;
+
+}

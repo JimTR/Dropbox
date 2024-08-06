@@ -1,15 +1,13 @@
 <?php
    
-    if (!defined('DOC_ROOT')) {
-    	define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));
-    }
+    if (!defined('DOC_ROOT')) {define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));}
     
     require DOC_ROOT . '/inc/functions.inc.php';  // spl_autoload_register() is contained in this file
     include DOC_ROOT. '/inc/settings.php'; // get settings
     include DOC_ROOT.'/inc/functions.php'; 
 	$build = "2115-1732187071";
 	$time_format = "h:i:s A";  // force time display
-	define ('SETTINGS',$settings); //globalize settings
+	define ('settings',$settings); //globalize settings
 	define('cr',PHP_EOL);
 	define ('API_OAUTH_TOKEN',"https://api.dropbox.com/oauth2/token");
 	define('API_OAUTH_AUTHORIZE',"https://www.dropbox.com/oauth2/authorize");
@@ -34,18 +32,48 @@
 	define('API_SAVEURL_JOBSTATUS_URL',"https://api.dropboxapi.com/2/files/save_url/check_job_status");
 	define('API_SEARCH_URL',"https://api.dropboxapi.com/2/files/search");
 	define('APP_CREATE_URL',"https://www.dropbox.com/developers/apps");
-	
-	if(!empty(getenv("TERM"))) {
-	 // run from console
-		define('TERM',true);
-	}
-	else{
-	 // run as cron
-		define('TERM',false);
-	}
+	define("cc", new Color());
+	if(!empty(getenv("TERM"))) {define('TERM',true);} // we have a terminal
+	else{define('TERM',false);} // likley to be a cron job
+	// old command line switches
 	$shortopts ="a:f:b:d:c:u:p:o:l:t:x:";
 	$longopts[]="debug::";
 	$longopts[]="help::";
 	$options = getopt($shortopts,$longopts);
 	define ('options',$options);
-?>
+	//end old command line switches
+arg("
+			-d    --debug    bool  debug the code
+			-a  --action    str     what to do
+			-au   --upload    bool     upload a fle or folder
+			-ad   --delete    bool     delete a file or folder
+			-b  --backup-path    str     backup path
+            -f  --folder    str     folder to work with
+			-k  --keep  bool     add the file directory to the dropbox path
+			-h  --help      bool  help (this screen)
+			-m  --mkdir   str     make a directory
+			-p  --path  str  file set to work with
+			-t  --timed  bool  create a directory based on current date 
+			-V  --version   bool    show version and exit
+			  
+	");
+	$all = arg(); 
+	ksort($all);
+	$action = arg("action");
+	$backup_path = arg("backup-path");
+	$path = arg("path");
+	$folder = arg("folder");
+	$delete = arg("delete");
+	$version = arg("version");
+	$verbose = arg("verbose");
+	$resovle = arg("resolve");
+    $summary = arg("summary");
+    $debug = arg("debug");
+    $upload = arg("upload");
+    define('debug',$debug);
+    $timed = arg("timed");
+    define ("timed",$timed);
+    define("keep",arg("keep"));
+    define('LOG',"dropbox.log");
+    define ('borders',array('horizontal' => '─', 'vertical' => '│', 'intersection' => '┼','left' =>'├','right' => '┤','left_top' => '┌','right_top'=>'┐','left_bottom'=>'└','right_bottom'=>'┘','top_intersection'=>'┬'));
+	
