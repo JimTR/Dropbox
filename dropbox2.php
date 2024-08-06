@@ -35,6 +35,10 @@ else{
 	//print_r($path_parts);
 }
 if(!empty($folder)) {$backup_path .="/$folder";}
+if($help){ echo "help set \n";
+	print_r($all);
+	exit;
+}
 if($upload) {
 	echo "upload set\n";
 	if(empty($path)) {
@@ -143,7 +147,11 @@ function upload_file($folder,$file) {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$response = curl_exec($ch);
 		$response = json_decode($response,true);
-		if (isset($response['name'])) {echo "$short_file uploaded to dropbox {$file_info['upload_path']} ({$file_info['bytes']})\n";}
+		if (isset($response['name'])) {
+			//$bytes = trim(
+			if(TERM) {$short_file = cc->convert("%y$short_file%n"); }
+			echo "$short_file uploaded to {$file_info['upload_path']} ({$file_info['bytes']})\n";
+		}
 		else{print_r($response);}
 		curl_close($ch);
 		fclose($fp);
@@ -513,7 +521,7 @@ function correct_file($file,$folder){
 		$file = "$this_path/$file";
 	}
 	$return['size'] = filesize($file);
-	$return['bytes'] = formatBytes($return['size'],2);
+	$return['bytes'] = trim(formatBytes($return['size'],2));
 	$tld = basename($file_details['dirname']); // use this as a feature 
 	if(!defined("tld")) {define("tld",$tld);}  // get the top level dir
 	$tld_find = strpos($file,tld);
