@@ -518,11 +518,11 @@ function correct_file($file,$folder){
 	if(!defined("tld")) {define("tld",$tld);}  // get the top level dir
 	$tld_find = strpos($file,tld);
 	$return['file'] = $file;
-	echo "tld = $tld file is $file\n";
-	echo "constant = ".tld.cr;
+	//echo "tld = $tld file is $file\n";
+	//echo "constant = ".tld.cr;
 	if($tld_find>0){$return['upload_path'] =  "/$folder/".substr($file, $tld_find+(strlen(tld)+1));} // correct the path to dropbox path + the shortened file path
 	$return['upload_path'] = str_replace("//","/",$return['upload_path']);
-	echo "upload path is {$return['upload_path']}\n";
+	//echo "upload path is {$return['upload_path']}\n";
 	//else {$return['upload_path'] =  "/$folder/".substr($file, $tld_find);} 
 	//print_r($return);
 	//die();
