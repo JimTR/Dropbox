@@ -54,6 +54,7 @@ arg("
 			-m  --mkdir   str     make a directory
 			-p  --path  str  file set to work with
 			-t  --timed  bool  create a directory based on current date 
+			-r  --retain  int  retain old backups for X days
 			-V  --version   bool    show version and exit
 			  
 	");
@@ -70,9 +71,11 @@ arg("
     $summary = arg("summary");
     $debug = arg("debug");
     $upload = arg("upload");
+    $help = arg("help");
     define('debug',$debug);
     $timed = arg("timed");
     define ("timed",$timed);
+    define ("retain",arg("retain"));
     define("keep",arg("keep"));
     define('LOG',"dropbox.log");
     define ('borders',array('horizontal' => '─', 'vertical' => '│', 'intersection' => '┼','left' =>'├','right' => '┤','left_top' => '┌','right_top'=>'┐','left_bottom'=>'└','right_bottom'=>'┘','top_intersection'=>'┬'));
