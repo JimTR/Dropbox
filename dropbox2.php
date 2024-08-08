@@ -344,9 +344,10 @@ function isdate($value) {
 	//die("checking this date $value/n");
 	if(strtotime($value)){
 		$new = strtotime("$value midnight"); 
-		//echo "$new is a date\n";
+		log_to(LOG, "$new is a date");
 	}
 	$test =date_parse_from_format(settings['DATE_FORMAT'], trim($value));
+	log_to(LOG,print_r($test,true));
 	//if ($test['error_count'] == 0) {
 		$ct = new DateTime($test['year'].'-'.$test['month'].'-'.$test['day']);
 		$ct->setTime(0,0,0);
@@ -365,6 +366,8 @@ function file_delete($folder,$options) {
 	if($timed) {
 		$now = time();
 		$today = strtotime('00:00:00', $now); //set to midnight
+		$today_d = date("d-m-y H:i:s",$today);
+		log_to(LOG,"Today = $today and this is $today_d"); 
 		$remove = strtotime('-'.settings['FILE_RETAIN'].' day', $today-82800);
 		$remove_date = date("d-m-y",$remove);
 		echo "Checking for  folders older than $remove_date in folder $folder\n";
@@ -553,6 +556,8 @@ function info($print = false) {
 	if($print){
 		$table = new Table(CONSOLE_TABLE_ALIGN_RIGHT, borders, 1, null, true);
 		echo "Dropbox Details\n";
+		if ($return['email_verified']) {$return['email_verified'] = "Yes";}
+		else {$return['email_verified'] = "No";}
 		$table->setHeaders(array('Item', 'Value'));
 		$table->addRow(array(cc->convert("%YUser%n"),$return['name']['display_name']));
 		$table->addRow(array(cc->convert("%YEmail Address%n"),$return['email']));
