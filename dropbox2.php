@@ -40,7 +40,7 @@ if($help){ echo "help set \n";
 	exit;
 }
 if($upload) {
-	echo "upload set\n";
+	//echo "upload set\n";
 	if(empty($path)) {
 		echo "no path supplied\n";
 		exit;
@@ -50,8 +50,9 @@ if($upload) {
 		exit;
 	}
 	//define ("backup_path","/$backup_path");
-	if (timed) { $path .= "/".date("d-m-y");}
-	echo "Uploading to $backup_path\n"; 
+	
+	if (timed) { $path .= "/".date("d-m-y",time());}
+	echo "Uploading to $backup_path from $path\n"; 
 	//die("$path\n");
 	
 	if(is_dir($path)) { 
@@ -186,7 +187,7 @@ function dirToArray($dir) {
 			if(is_file($fullFileName)){
 				$result[] = $fullFileName;
 				//if (debug) {
-					log_to(LOG, "found $fullFileName");
+					//log_to(LOG, "found $fullFileName");
 					$tmp[] = explode("/",substr($fullFileName,1));
 					$key =array_key_last($tmp);
 					array_unshift($tmp[$key],$fullFileName);
@@ -251,7 +252,6 @@ function dirToArray($dir) {
 	curl_close($ch);
 	$session_id = $ids['session_id'];
 	foreach ($chunks as  $chunk) {
-		//$data= db_check_token(); 
 		unset ($headr);
 		$chunk_num++;
 		$fp = fopen("$targetpath/$chunk", 'rb');
@@ -301,15 +301,6 @@ function dirToArray($dir) {
 		echo "\toffset is set to $offset overall file set to $size";
 		if ($offset == $size) {echo ' File size matches'.cr;}
 		else {echo ' File has not uploaded correctly';}
-		/*echo "\tHeaders Sent".cr;
-		foreach ($headr as $header){
-			echo "\t$header".cr;
-		}*/
-		
-		/*foreach ($response as $k => $v) {
-			echo "\t".$k.' => '.$v.cr;
-		}*/
-		// do we hold on to the split file ? 	 
 	}
 	rrmdir($targetpath); // clean up
 	echo "$chunk_base succesfully uploaded\n" ; //do something with this		
@@ -344,15 +335,14 @@ function isdate($value) {
 	//die("checking this date $value/n");
 	if(strtotime($value)){
 		$new = strtotime("$value midnight"); 
-		log_to(LOG, "$new is a date");
+		log_to(LOG, "$new is a date that we want");
 	}
 	$test =date_parse_from_format(settings['DATE_FORMAT'], trim($value));
 	log_to(LOG,print_r($test,true));
-	//if ($test['error_count'] == 0) {
-		$ct = new DateTime($test['year'].'-'.$test['month'].'-'.$test['day']);
-		$ct->setTime(0,0,0);
-		return $ct->getTimestamp();
-	//}
+	$ct = new DateTime($test['year'].'-'.$test['month'].'-'.$test['day']);
+	$ct->setTime(0,0,0);
+	return $ct->getTimestamp();
+	
     return false;
 }
 function file_delete($folder,$options) {
@@ -497,7 +487,8 @@ function list_files($data,$path='',$display=false ) {
 			}
 		}
 		//if($data===false){
-			echo cr.'Contents of '.cc->convert("%y".substr($path,1)."%n").cr;
+		if (TERM){echo "\nContents of ".cc->convert("%y".substr($path,1)."%n").cr;}
+		else {echo "\nContents of ".substr($path,1)."\n";}
 			if ($total_size >0 || !isset($total_size)) {
 				$total_size = formatBytes($total_size,2);
 				$table->addRow(array('Total','',cc->convert("%Y$total_size%n"),''));
@@ -509,7 +500,8 @@ function list_files($data,$path='',$display=false ) {
 		return $y['entries'];
 	}
 	else {
-		echo 'Could not find '.cc->convert("%y".substr($path,1)."%n").cr;
+		if(TERM) {echo 'Could not find '.cc->convert("%y".substr($path,1)."%n").cr;}
+		else {echo 'Could not find '.substr($path,1).cr;}
 	}	
 }
 function correct_file($file,$folder){
