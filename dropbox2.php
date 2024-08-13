@@ -51,7 +51,10 @@ if($upload) {
 	}
 	//define ("backup_path","/$backup_path");
 	
-	if (timed) { $path .= "/".date("d-m-y",time());}
+	if (timed) { 
+		$path .= "/".date("d-m-y",time());
+		log_to(LOG, "detected today from date $path");
+	} 
 	echo "Uploading to $backup_path from $path\n"; 
 	//die("$path\n");
 	
@@ -384,7 +387,7 @@ function file_delete($folder,$options) {
 							$dsize = $dsize+$tmp['size'];
 						}
 					}
-					$erase =  "$folder{$file['name']}";
+					$erase =  "$folder/{$file['name']}";
 					//echo "the folder is $folder\n";
 					echo "deleting $erase (".formatBytes($dsize,2).")\n";
 					//die("this is what we are doing $erase\n");
