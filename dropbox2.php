@@ -52,7 +52,7 @@ if($upload) {
 	//define ("backup_path","/$backup_path");
 	
 	if (timed) { 
-		$path .= "/".date("d-m-y",time());
+		$path .= "/".date(settings['DATE_FORMAT'],time());
 		log_to(LOG, "detected today from date $path");
 	} 
 	echo "Uploading to $backup_path from $path\n"; 
@@ -490,8 +490,8 @@ function list_files($data,$path='',$display=false ) {
 			}
 		}
 		//if($data===false){
-		if (TERM){echo "\nContents of ".cc->convert("%y".substr($path,1)."%n").cr;}
-		else {echo "\nContents of ".substr($path,1)."\n";}
+		//if (TERM){echo "\nContents of ".cc->convert("%y".substr($path,1)."%n").cr;}
+		//else {echo "\nContents of ".substr($path,1)."\n";}
 			if ($total_size >0 || !isset($total_size)) {
 				$total_size = formatBytes($total_size,2);
 				$table->addRow(array('Total','',cc->convert("%Y$total_size%n"),''));
