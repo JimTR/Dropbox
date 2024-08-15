@@ -341,7 +341,7 @@ function isdate($value) {
 		log_to(LOG, "$new is a date that we want");
 	}
 	$test =date_parse_from_format(settings['DATE_FORMAT'], trim($value));
-	log_to(LOG,print_r($test,true));
+	//log_to(LOG,print_r($test,true));
 	$ct = new DateTime($test['year'].'-'.$test['month'].'-'.$test['day']);
 	$ct->setTime(0,0,0);
 	return $ct->getTimestamp();
@@ -363,7 +363,7 @@ function file_delete($folder,$options) {
 		log_to(LOG,"Today = $today and this is $today_d"); 
 		$remove = strtotime('-'.settings['FILE_RETAIN'].' day', $today-82800);
 		$remove_date = date("d-m-y",$remove);
-		echo "Checking for  folders older than $remove_date in folder $folder\n";
+		echo "Checking for folders older than $remove_date in folder $folder\n";
 		
 		if(empty($folder)) {echo "no folder set\n";}
 		$fl = list_files($timed,$folder);
