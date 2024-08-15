@@ -1,3 +1,4 @@
+#!/usr/bin/php -d memory_limit=2048M
 <?php
 /*
  * dropbox2.php
