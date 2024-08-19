@@ -362,7 +362,8 @@ function file_delete($folder,$options) {
 		$today = strtotime('00:00:00', $now); //set to midnight
 		$today_d = date("d-m-y H:i:s",$today);
 		log_to(LOG,"Today = $today and this is $today_d"); 
-		$remove = strtotime('-'.settings['FILE_RETAIN'].' day', $today-82800);
+		if(retain) {$remove = strtotime('-'.retain.' day', $today-82800);}
+		else {$remove = strtotime('-'.settings['FILE_RETAIN'].' day', $today-82800);}
 		$remove_date = date("d-m-y",$remove);
 		echo "Checking for folders older than $remove_date in folder $folder\n";
 		
