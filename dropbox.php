@@ -1,7 +1,7 @@
 #!/usr/bin/php -d memory_limit=2048M
 <?php
 /*
- * dropbox2.php
+ * dropbox.php
  * 
  * Copyright 2024 Jim Richardson <jim@phporyx.co.uk>
  * 
@@ -187,24 +187,17 @@ function dirToArray($dir) {
   $fileSPLObjects =  new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir),RecursiveIteratorIterator::CHILD_FIRST);
 	try {
 		foreach( $fileSPLObjects as $fullFileName => $fileSPLObject ) {
-			//echo "file name = $fullFileName\n";
 			if(is_file($fullFileName)){
 				$result[] = $fullFileName;
-				//if (debug) {
-					//log_to(LOG, "found $fullFileName");
-					$tmp[] = explode("/",substr($fullFileName,1));
-					$key =array_key_last($tmp);
-					array_unshift($tmp[$key],$fullFileName);
-				//}
+				$tmp[] = explode("/",substr($fullFileName,1));
+				$key =array_key_last($tmp);
+				array_unshift($tmp[$key],$fullFileName);
 			}
 		}
 	}
 	catch (UnexpectedValueException $e) {printf("Directory [%s] contained a directory we can not recurse into", $directory);}
 	foreach ($result as $k => $v) {if (is_dir($v))  {unset( $result[$k]);}}
 	$result= array_values($result);
-	//print_r($result);
-	//print_r($tmp);
-	//die();
 	return $tmp;
 }
 
@@ -223,9 +216,7 @@ function dirToArray($dir) {
 		echo  "\tdb_upload_large_file: current working directory $cd\n";
 		echo  "\tdb_upload_large_file: chunk target path $targetpath\n";
 		echo "\tdb_upload_large_file: File breakdown \n";
-		foreach ($abs_path_parts as $k=> $v) {
-			echo "\t".$k.' => '.$v.cr;
-		}
+		foreach ($abs_path_parts as $k=> $v) {echo "\t".$k.' => '.$v.cr;}
 		echo "\twriting chunks from $file\n";
 	}
 	if (settings['CHUNK_SIZE'] >= 150) {
@@ -391,7 +382,7 @@ function file_delete($folder,$options) {
 					}
 					$erase =  "$folder/{$file['name']}";
 					//echo "the folder is $folder\n";
-					echo "deleting $erase (".formatBytes($dsize,2).")\n";
+					echo "deleting $erase (".formatBytes($dsize,2)." from Dropbox)\n";
 					//die("this is what we are doing $erase\n");
 					//exit;
 					unset($headr);
@@ -410,10 +401,10 @@ function file_delete($folder,$options) {
 					curl_close($ch);
 					$dtotal =$dtotal+$dsize;
 				}
-				else {echo "{$file['name']} is still a current folder\n";}
+				else {echo "{$file['name']} is still a current folder on Dropbox\n";}
 			}
 		}
-		echo 'Total Deleted '.formatBytes($dtotal,2).cr;
+		echo 'Total Deleted  From Dropbox'.formatBytes($dtotal,2).cr;
 		return; 
 	}
 	//echo "folder is /$folder (no Time)\n";
