@@ -6,3 +6,4 @@ $settings['DATE_FORMAT'] =  'd-m-y';
 $settings['FILE_RETAIN'] = 2;
 $settings['DEBUG'] = 1;
 $settings['CHUNK_SIZE'] = 100;
+$settings['TIME_ZONE'] = "Europe/London";
