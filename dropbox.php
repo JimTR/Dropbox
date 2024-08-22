@@ -404,7 +404,7 @@ function file_delete($folder,$options) {
 				else {echo "{$file['name']} is still a current folder on Dropbox\n";}
 			}
 		}
-		echo 'Total Deleted  From Dropbox'.formatBytes($dtotal,2).cr;
+		echo 'Total Deleted  From Dropbox '.formatBytes($dtotal,2).cr;
 		return; 
 	}
 	//echo "folder is /$folder (no Time)\n";
