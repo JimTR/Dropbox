@@ -235,186 +235,7 @@ global $database;
 		return date($format, $date);
     }
 
-    // Formats a phone number as (xxx) xxx-xxxx or xxx-xxxx depending on the length.
-    function format_phone($phone)
-    {
-        $phone = preg_replace("/[^0-9]/", '', $phone);
-
-        if(strlen($phone) == 7)
-            return preg_replace("/([0-9]{3})([0-9]{4})/", "$1-$2", $phone);
-        elseif(strlen($phone) == 10)
-            return preg_replace("/([0-9]{3})([0-9]{3})([0-9]{4})/", "($1) $2-$3", $phone);
-        else
-            return $phone;
-    }
-
-    // Outputs hour, minute, am/pm dropdown boxes
-    function hourmin($outputformat ='h m',$hid = 'hour', $mid = 'minute', $pid = 'ampm', $hval = null, $mval = null, $pval = null)
-    {
-        // Dumb hack to let you just pass in a timestamp instead
-        if(func_num_args() == 1)
-        {
-            list($hval, $mval, $pval) = explode(' ', date('g i a', strtotime($hid)));
-            $hid = 'hour';
-            $mid = 'minute';
-            $aid = 'ampm';
-        }
-        else
-        {
-            if(is_null($hval)) $hval = date('h');
-            if(is_null($mval)) $mval = date('i');
-            if(is_null($pval)) $pval = date('a');
-        }
-		for ($i = 0; $i<=23;$i++)
-		{
-			$hours[] = $i;
-		}
-        //$hours = array(0,1, 2, 3, 4, 5, 6, 7, 9, 10, 11,12);
-        $out = "<select name='$hid' id='$hid' multiple size = \"24\">";
-        foreach($hours as $hour)
-            if(intval($hval) == intval($hour)) $out .= "<option value='$hour' selected>$hour</option>";
-            else $out .= "<option value='$hour'>$hour</option>";
-        $out .= "</select>";
-        // end hours
-        
-        
-		for ($i = 0; $i<=59;$i++)
-		{
-			$minutes[] = $i;
-		}
-        //$minutes = array('00', 15, 30, 45);
-        $out .= "<select name='$mid' id='$mid' multiple>";
-        foreach($minutes as $minute)
-            if(intval($mval) == intval($minute)) $out .= "<option value='$minute' selected>$minute</option>";
-            else $out .= "<option value='$minute'>$minute</option>";
-        $out .= "</select>";
-
-       /* $out .= "<select name='$pid' id='$pid'>";
-        $out .= "<option value='am'>am</option>";
-        if($pval == 'pm') $out .= "<option value='pm' selected>pm</option>";
-        else $out .= "<option value='pm'>pm</option>";
-        $out .= "</select>";
-		*/
-        return $out;
-    }
-
-    // Returns the HTML for a month, day, and year dropdown boxes.
-    // You can set the default date by passing in a timestamp OR a parseable date string.
-    // $prefix_ will be appened to the name/id's of each dropdown, allowing for multiple calls in the same form.
-    // $output_format lets you specify which dropdowns appear and in what order.
-    function mdy($date = null, $prefix = null, $output_format = 'w m d y',$multiple ='',$class='',$size='"0"',$start=0,$finish=0,$mval = array())
-    {
-		//echo '<br>finish = ',$finish.' Start = '.$start.'<br>';
-		//printr($mval,true);
-        if(is_null($date)) $date = time();
-        if(!ctype_digit($date)) $date = strtotime($date);
-        if(!is_null($prefix)) $prefix .= '_';
-        //list($yval, $mval, $dval) = explode(' ', date('Y n j', $date));
-        //$mval = 99;
-		$week_days = [
-			'Sunday',
-			'Monday',
-			'Tuesday',
-			'Wednesday',
-			'Thursday',
-			'Friday',
-			'Saturday'
-	];
-	     //print_r($week_days);
-	     if ($finish ==0){$finish=6;}
-	     $week_dd =  "<select name='{$prefix}weekdays[]' id='{$prefix}weekdays' {$multiple} size = {$size} class={$class}>";
-	     for ($i = 0; $i<=$finish;$i++)
-	     {
-			 //read week days
-			 $week_dd .=  "<option value='$i'$selected>" . $week_days[$i] . "</option>";
-		}	
-		$week_dd .= "</select>"; 
-		
-        $month_dd = "<select name='{$prefix}months[]' id='{$prefix}month' {$multiple} class={$class} size= {$size}>";
-        for($i = 1; $i <= 12; $i++)
-        {
-            $selected = ($mval == $i) ? ' selected="selected"' : '';
-            $month_dd .= "<option value='$i'$selected>" . date('F', mktime(0, 0, 0, $i, 1, 2000)) . "</option>";
-        }
-        $month_dd .= "</select>";
-         if ($finish ==0){$finish = 31;
-			 //echo '$finish set to zero !<br>';
-			 }
-         //if ($start ==0){$start = 1;} 
-        $day_dd = "<select name='{$prefix}days[]' id='{$prefix}day' {$multiple} class={$class} size ={$size}> ";
-        for($i = $start; $i <= $finish; $i++)
-        {
-            $selected = ($mval == $i) ? ' selected="selected"' : '';
-            $day_dd .= "<option value='$i'$selected>$i</option>";
-        }
-        $day_dd .= "</select>";
-
-        $year_dd = "<select name='{$prefix}years[]' id='{$prefix}year' {$multiple} class={$class} size = {$size}>";
-        for($i = date('Y'); $i < date('Y') + 10; $i++)
-        {
-            $selected = ($yval == $i) ? ' selected="selected"' : '';
-            $year_dd .= "<option value='$i'$selected>$i</option>";
-        }
-        $year_dd .= "</select>";
-        if ($finish ==0) {
-			//echo '$finish set to zero !<br>';
-			$finish= 23;
-			}
-        //$finish =11;
-        //echo '$finish set to '.$finish;
-        $hour_dd = "<select name='{$prefix}hours[]' id='{$prefix}hour' {$multiple} class={$class} size = {$size}>";
-        for ($i = $start; $i<=$finish;$i++)
-		{
-			$hours[] = $i;
-		}
-        
-        
-        foreach($hours as $hour)
-            if(in_array($hour,$mval)) $hour_dd .= "<option value='$hour' selected>$hour</option>";
-            else $hour_dd .= "<option value='$hour'>$hour</option>";
-        $hour_dd .= "</select>";
-        
-        if ($finish ==0) {$finish=59;}
-        //echo $start.'<br>'; 
-        for ($i = $start; $i<=$finish;$i++)
-		{
-			$minutes[] = $i;
-		}
-        //printr($mval,true);
-         $min_dd = "<select name='{$prefix}mins[]' id='{$prefix}' {$multiple} class={$class} size = {$size}>";
-        foreach($minutes as $minute)
-        
-            if(in_array($minute,$mval))  {
-				$min_dd .= "<option value='$minute' selected>$minute</option>";
-				//echo "Got Irix<br>";
-				}
-            else $min_dd .= "<option value='$minute'>$minute</option>";
-        $min_dd .= "</select>";
-
-        $trans = array('m' => $month_dd, 'd' => $day_dd, 'y' => $year_dd, 'w' =>$week_dd, 'h' =>$hour_dd, 'mi' => $min_dd );
-        return strtr($output_format, $trans);
-    }
-
-    // Redirects user to $url
-    function redirect($url = null)
-    {
-		if(is_null($url)) $url = $_SERVER['PHP_SELF'];
-        header("Location: $url");
-        exit();
-    }
-
-    // Ensures $str ends with a single /
-    function slash($str)
-    {
-        return rtrim($str, '/') . '/';
-    }
-
-    // Ensures $str DOES NOT end with a /
-    function unslash($str)
-    {
-        return rtrim($str, '/');
-    }
-
+   
     // Returns an array of the values of the specified column from a multi-dimensional array
     function gimme($arr, $key = null)
     {
@@ -428,24 +249,7 @@ global $database;
         return $out;
     }
 
-    // Fixes MAGIC_QUOTES
-    function fix_slashes($arr = '')
-    {
-        if(is_null($arr) || $arr == '') return null;
-       // if(!get_magic_quotes_gpc()) return $arr;
-        return is_array($arr) ? array_map('fix_slashes', $arr) : stripslashes($arr);
-    }
-
-    // Returns the first $num words of $str
-    function max_words($str, $num, $suffix = '')
-    {
-        $words = explode(' ', $str);
-        if(count($words) < $num)
-            return $str;
-        else
-            return implode(' ', array_slice($words, 0, $num)) . $suffix;
-    }
-
+   
     // Serves an external document for download as an HTTP attachment.
     function download_document($filename, $mimetype = 'application/octet-stream')
     {
@@ -502,153 +306,14 @@ global $database;
         return round($val, $round) . array_shift($unit) . 'B';
     }
 
-    // Tests for a valid email address and optionally tests for valid MX records, too.
-    function valid_email($email, $test_mx = false)
-    {
-        if(preg_match("/^([_a-z0-9+-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i", $email))
-        {
-            if($test_mx)
-            {
-                list( , $domain) = explode("@", $email);
-                return getmxrr($domain, $mxrecords);
-            }
-            else
-                return true;
-        }
-        else
-            return false;
-    }
-
-    // Grabs the contents of a remote URL. Can perform basic authentication if un/pw are provided.
-    function geturl($url, $username = null, $password = null)
-    {
-        if(function_exists('curl_init'))
-        {
-            $ch = curl_init();
-            if(!is_null($username) && !is_null($password))
-                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Authorization: Basic ' .  base64_encode("$username:$password")));
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-            $html = curl_exec($ch);
-            curl_close($ch);
-            return $html;
-        }
-        elseif(ini_get('allow_url_fopen') == true)
-        {
-            if(!is_null($username) && !is_null($password))
-                $url = str_replace("://", "://$username:$password@", $url);
-            $html = file_get_contents($url);
-            return $html;
-        }
-        else
-        {
-            // Cannot open url. Either install curl-php or set allow_url_fopen = true in php.ini
-            return false;
-        }
-    }
-
-    // Returns the user's browser info.
-    // browscap.ini must be available for this to work.
-    // See the PHP manual for more details.
-    function browser_info()
-    {
-        $info    = get_browser(null, true);
-        $browser = $info['browser'] . ' ' . $info['version'];
-        $os      = $info['platform'];
-        $ip      = $_SERVER['REMOTE_ADDR'];
-        return array('ip' => $ip, 'browser' => $browser, 'os' => $os);
-    }
-
-    // Quick wrapper for preg_match
-    function match1($regex, $str, $i = 0)
-    {
-        if(preg_match($regex, $str, $match) == 1)
-            return $match[$i];
-        else
-            return false;
-    }
-
-    // Sends an HTML formatted email
-    function send_html_mail($to, $subject, $msg, $from, $plaintext = '')
-    {
-        if(!is_array($to)) $to = array($to);
-
-        foreach($to as $address)
-        {
-            $boundary = uniqid(rand(), true);
-
-            $headers  = "From: $from\n";
-            $headers .= "MIME-Version: 1.0\n";
-            $headers .= "Content-Type: multipart/alternative; boundary = $boundary\n";
-            $headers .= "This is a MIME encoded message.\n\n";
-            $headers .= "--$boundary\n" .
-                        "Content-Type: text/plain; charset=ISO-8859-1\n" .
-                        "Content-Transfer-Encoding: base64\n\n";
-            $headers .= chunk_split(base64_encode($plaintext));
-            $headers .= "--$boundary\n" .
-                        "Content-Type: text/html; charset=ISO-8859-1\n" .
-                        "Content-Transfer-Encoding: base64\n\n";
-            $headers .= chunk_split(base64_encode($msg));
-            $headers .= "--$boundary--\n" .
-
-            mail($address, $subject, '', $headers);
-        }
-    }
-
+   
     // Returns the lat, long of an address via Yahoo!'s geocoding service.
     // You'll need an App ID, which is available from here:
     // http://developer.yahoo.com/maps/rest/V1/geocode.html
     // Note: needs to be updated to use PlaceFinder instead.
-    function geocode($location, $appid)
-    {
-        $location = urlencode($location);
-        $appid    = urlencode($appid);
-        $data     = file_get_contents("http://local.yahooapis.com/MapsService/V1/geocode?output=php&appid=$appid&location=$location");
-        $data     = unserialize($data);
-
-        if($data === false) return false;
-
-        $data = $data['ResultSet']['Result'];
-
-        return array('lat' => $data['Latitude'], 'lng' => $data['Longitude']);
-    }
-
-    // A stub for Yahoo!'s reverse geocoding service
-    // http://developer.yahoo.com/geo/placefinder/
-    function reverse_geocode($lat, $lng)
-    {
-
-    }
-
+   
     // Quick and dirty wrapper for curl scraping.
-    function curl($url, $referer = null, $post = null)
-    {
-        static $tmpfile;
-
-        if(!isset($tmpfile) || ($tmpfile == '')) $tmpfile = tempnam('/tmp', 'FOO');
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $tmpfile);
-        curl_setopt($ch, CURLOPT_COOKIEJAR, $tmpfile);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en-US; rv:1.8.1) Gecko/20061024 BonEcho/2.0");
-        // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        // curl_setopt($ch, CURLOPT_VERBOSE, 1);
-
-        if($referer) curl_setopt($ch, CURLOPT_REFERER, $referer);
-        if(!is_null($post))
-        {
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-        }
-
-        $html = curl_exec($ch);
-
-        // $last_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-        return $html;
-    }
+   
 
     // Accepts any number of arguments and returns the first non-empty one
     function pick()
@@ -670,12 +335,7 @@ global $database;
         }
     }
 
-    // This is easier than typing 'echo WEB_ROOT'
-    function WEBROOT()
-    {
-        echo WEB_ROOT;
-    }
-
+ 
     // Class Autloader
     spl_autoload_register('framework_autoload');
 
@@ -889,24 +549,7 @@ function getnid ()
 		srand(time());
 		return md5(rand() . microtime());
 	}
-function writeid ($id, $nid,$database)
-	{
-		          global $site;
-				  $ip = getip();
-				  // ban this IP if it connects more than config value (default = 2)
-				  // workout who to ban 
-				  $iprows = $database->num_rows("select * from sessions where ip like '%".$ip."%'");
-				  if ($iprows > 2) { redirect( $site->settings['url']."/error.php?action=1");}
-				  		
-	}
-	function distroy_session($nid,$database)
-		{
-			// distroy session for logged in user if they log out
-			$datas['nid'] = $nid; //got the user id
-			$database->delete("sessions",$datas);
-			
-		}
-		
+
 function log_to ($file,$info)
 	{
 		// log stuff
@@ -914,33 +557,6 @@ function log_to ($file,$info)
 		if (!strrpos ($info , "\r\n" )){ $info .="\r\n";}
 		file_put_contents($file, $info, FILE_APPEND );
 		chmod($file, 0666); 
-	}
-function getip()
-	{
-		if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)){
-            return  $_SERVER["HTTP_X_FORWARDED_FOR"];  
-        }else if (array_key_exists('REMOTE_ADDR', $_SERVER)) { 
-            return $_SERVER["REMOTE_ADDR"]; 
-        }else if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
-            return $_SERVER["HTTP_CLIENT_IP"]; 
-        }else if (array_key_exists('HTTP_X_REAL_IP', $_SERVER)) {
-			return $_SERVER ['HTTP_X_REAL_IP'];}
-			return "Unknown";  
-		 
-	}
-function page_stats($lines,$queries,$start)
-	{
-		//return php & sql as % of usage
-		$percent = ($lines / 100);
-		$return['sql'] = round ($queries / $percent,2);
-		$return['php'] = round(100 - $return['sql'],2);
-		$time = microtime();
-		$time = explode(' ', $time);
-		$time = $time[1] + $time[0];
-		$finish = $time;
-        $return['time'] = round(($finish - $start), 4);
-		$return['query'] = $queries;
-		return $return;
 	}
 		
 function filelength($file)
@@ -959,192 +575,14 @@ function filelength($file)
 			fclose($handle);
 			return $linecount;
 }
-
-function writeini ($ini_array,$file,$header,$name)
-	{
-		/* write settings or lang file
-		 * $settings  Type array  - data to write 
-		 * $file Type string - file to write to
-		 * $header Type string - file identifier
-		 * $name Type string - array key name
-		 * if $name is blank the key wil be ini
-		 * example writeini ($settings,"main.ini","main ini file version v1","ini"); 
-		 */  
-		 
-		if(!isset($name)) {$name ="ini";} 
-		$writevar ="<?php
-/*********************************\ 
-". $header."
-\*********************************/\n";
-	foreach ($ini_array as $key => $val) {
-      $writevar .=  "\$".$name."['" . $key . "'] = \"".$val."\";\r\n";
-    }
-    $writevar .= "?>";
-    	file_put_contents ($file , $writevar,LOCK_EX);
-	    clearstatcache();
-}
-
-function romanNumerals($num) 
-{
-    $n = intval($num);
-    $res = '';
- 
-    /*** roman_numerals array  ***/
-    $roman_numerals = array(
-                'M'  => 1000,
-                'CM' => 900,
-                'D'  => 500,
-                'CD' => 400,
-                'C'  => 100,
-                'XC' => 90,
-                'L'  => 50,
-                'XL' => 40,
-                'X'  => 10,
-                'IX' => 9,
-                'V'  => 5,
-                'IV' => 4,
-                'I'  => 1);
- 
-    foreach ($roman_numerals as $roman => $number) 
-    {
-        /*** divide to get  matches ***/
-        $matches = intval($n / $number);
- 
-        /*** assign the roman char * $matches ***/
-        $res .= str_repeat($roman, $matches);
- 
-        /*** substract from the number ***/
-        $n = $n % $number;
-    }
- 
-    /*** return the res ***/
-    return $res;
-    }
-	
-function tzlist($tz1)
-{
-	/* function returns an option list containing valid time zones
-	 * but only the option section the rest of the form must be made elsewhere
-	 * defaults the time zone to utc if no time zone is supplied
-	 */ 
-	if (is_null($tz1)){$tz1 = 416;} 
-	
-    $tzlist = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
-    
-	foreach ($tzlist as $key => $tzitem)
-		{
-			if ($key == $tz1) {
-				$tz .= '<option selected="selected" value="'.$key.'">'.$tzitem.'</option>';
-			}
-			else{
-			$tz .= '<option value="'.$key.'">'.$tzitem.'</option>';
-			}
-		}
-	  
-	  return $tz;
-  }
-  
-function return_tz($tz1)
-{
-	/*this function returns the set time zone name from a value
-	 * used to get the server current timezone
-	 * if no value is supplied defaults to utc
-	 * returns the timezone name to be used with PHP -> date_default_timezone_set
-	 * to set the current server timezone
-	 */ 
-	 
-	if (is_null($tz1)){$tz1 = 416;} 
-	
-	$tzlist = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
-	  
-	foreach ($tzlist as $key => $tzitem)
-		{
-			if ($key === $tz1+0) {
-				break;
-				}
-		}
-		
-		return $tzitem;
-}
-
-
-function ban_check ($user)
-{
-	if ($user->level === 'banned') {
-			   redirect( '/misc.php?action=2');
-		   }
-		   return;
-	   }
-	   
-function check_ip($ip) 
-{
-	$ip = $_GET['ip'];
- $ch = curl_init();
-	     curl_setopt($ch, CURLOPT_URL, 'https://ipvigilante.com/'.$ip);
-	     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		 $xm = curl_exec($ch);
-		 curl_close($ch);
-		 $ipArray = json_decode($xm, true);
-		
-		 if ($ipArray['status'] == 'success') {
-		 $data = $ipArray['data'];
-		 return $data;  
-	 }
-	 else {
-		  return $ipArray['status'];
-	  }
-  }
- function build_cron_line($data) {
-	 // build cron line from supplied form
-	 
-	 //printr($data,true);
-	 if ($data['active'] == 0) {$cron ='# ';} // disable
-	 if ($data['special_def'] == 1) {
-		 $cron .= '@'.$data['special'].' '; 
-		  goto addcmd;
-		  }
-	 if ($data['all_mins'] == 1 )  {$cron .='* ';}
-	 else {$cron .= implode(',',$data['mins']).' ';}
-	 if 	($data['all_hours'] == 1) {$cron .= '* ';}
-	 else {$cron .= implode(',',$data['hours']).' ';}
-	  if  ($data['all_days'] == 1) {$cron .= '* ';}
-	 else {$cron .= implode(',',$data['days']).' ';}
-	  if  ($data['all_months'] == 1) {$cron .= '* ';}
-	 else {$cron .= implode(',',$data['months']).' ';}
-	  if  ($data['all_weekdays'] == 1) {$cron .= '* ';}
-	 else {$cron .= implode(',',$data['weekdays']).' ';}
-	  
-	 addcmd:
-		$cron .= $data['cmd'].' ';
-		$cron .= '# '.$data['comment'];
-		$cron= trim($cron);
-		cronline: 
-	 #echo 'Cron Line = '. $cron.'<br>';
-	 return $cron;
-	 
- }
   	   
 function is_cli()
 {
-    if ( defined('STDIN') )
-    {
-        return true;
-    }
-    if ( php_sapi_name() == 'cli' )
-    {
-        return true;
-    }
-    if ( array_key_exists('SHELL', $_ENV) ) {
-        return true;
-    }
-    if ( empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0) 
-    {
-        return true;
-    } 
-    if ( !array_key_exists('REQUEST_METHOD', $_SERVER) )
-    {
-        return true;
-    }
+    if ( defined('STDIN') ){return true; }
+    if ( php_sapi_name() == 'cli' ){return true;}
+    if ( array_key_exists('SHELL', $_ENV) ) {return true;}
+    if ( empty($_SERVER['REMOTE_ADDR']) and !isset($_SERVER['HTTP_USER_AGENT']) and count($_SERVER['argv']) > 0) {return true;} 
+    if ( !array_key_exists('REQUEST_METHOD', $_SERVER) ){return true;}
     return false;
 }
 
@@ -1153,95 +591,65 @@ function root() {
 	 * checks for root user not sudo user
 	 * see check_sudo for priv user
 	 */ 
- if (posix_getuid() === 0){
-	 // root user
-        return true;
-   } 
-   else {
-       // non root user use check_sudo !
-         return false;
-}
+ if (posix_getuid() === 0){return true;} 
+   else {return false;}
 }
 
 function check_sudo($user) {
-$user=trim($user);
-// centos = wheel not sudo
-$j= shell_exec('getent group sudo | cut -d: -f4');
-$yes= strpos($j, $user);
-if ($yes ===0 or $yes>1) {
-return true;
-}
-else {   
-return false;
-}
+	$user=trim($user);
+	// centos = wheel not sudo
+	$j= shell_exec('getent group sudo | cut -d: -f4');
+	$yes= strpos($j, $user);
+	if ($yes ===0 or $yes>1) {return true;}
+	else { return false;}
 }
 
-function orderBy(&$data, $field,$order)
-  {
+function orderBy(&$data, $field,$order){
   $args['field'] = $field;
   $args['order'] =$order;
-    
-    usort($data, function($a, $b) use ($args) {
-          if ($args['order'] == "d") {
-				return strnatcmp($b[$args['field']], $a[$args['field']]);
-			}
-		else {
-				return strnatcmp($a[$args['field']], $b[$args['field']]);
-			}
-});
-   
-  }
+   usort($data, function($a, $b) use ($args) {
+		if ($args['order'] == "d") {return strnatcmp($b[$args['field']], $a[$args['field']]);}
+		else {return strnatcmp($a[$args['field']], $b[$args['field']]);}
+	});
+}
   
-  function getObscuredText($strMaskChar='*')
-    {
-        if(!is_string($strMaskChar) || $strMaskChar=='')
-        {
-            $strMaskChar='*';
-        }
-        $strMaskChar=substr($strMaskChar,0,1);
-        readline_callback_handler_install('', function(){});
-        $strObscured='';
-        while(true)
-        {
-            $strChar = stream_get_contents(STDIN, 1);
-            $intCount=0;
-// Protect against copy and paste passwords
-// Comment \/\/\/ to remove password injection protection
-            $arrRead = array(STDIN);
-            $arrWrite = NULL;
-            $arrExcept = NULL;
-            while (stream_select($arrRead, $arrWrite, $arrExcept, 0,0) && in_array(STDIN, $arrRead))            
-            {
-                stream_get_contents(STDIN, 1);
-                $intCount++;
-            }
-//        /\/\/\
-// End of protection against copy and paste passwords
-            if($strChar===chr(10))
-            {
-                break;
-            }
-            if ($intCount===0)
-            {
-                if(ord($strChar)===127)
-                {
-                    if(strlen($strObscured)>0)
-                    {
-                        $strObscured=substr($strObscured,0,strlen($strObscured)-1);
-                        echo(chr(27).chr(91)."D"." ".chr(27).chr(91)."D");
-                    }
-                }
-                elseif ($strChar>=' ')
-                {
-                    $strObscured.=$strChar;
-                    echo($strMaskChar);
-                    //echo(ord($strChar));
-                }
-            }
-        }
-        readline_callback_handler_remove();
-        return($strObscured);
-    }
+function getObscuredText($strMaskChar='*') {
+	if(!is_string($strMaskChar) || $strMaskChar==''){$strMaskChar='*';}
+	$strMaskChar=substr($strMaskChar,0,1);
+	readline_callback_handler_install('', function(){});
+	$strObscured='';
+	while(true){
+		$strChar = stream_get_contents(STDIN, 1);
+		$intCount=0;
+		// Protect against copy and paste passwords
+		// Comment \/\/\/ to remove password injection protection
+		$arrRead = array(STDIN);
+		$arrWrite = NULL;
+		$arrExcept = NULL;
+		while (stream_select($arrRead, $arrWrite, $arrExcept, 0,0) && in_array(STDIN, $arrRead)) {
+			stream_get_contents(STDIN, 1);
+			$intCount++;
+		}
+		//        /\/\/\
+		// End of protection against copy and paste passwords
+		if($strChar===chr(10)){break;}
+		if ($intCount===0){
+			if(ord($strChar)===127){
+				if(strlen($strObscured)>0){
+					$strObscured=substr($strObscured,0,strlen($strObscured)-1);
+					echo(chr(27).chr(91)."D"." ".chr(27).chr(91)."D");
+				}
+			}
+			elseif ($strChar>=' '){
+				$strObscured.=$strChar;
+				echo($strMaskChar);
+				//echo(ord($strChar));
+			}
+		}
+	}
+	readline_callback_handler_remove();
+	return($strObscured);
+}
     
     function ping($addr,$port,$timeout) {
 		// ping port
@@ -1268,72 +676,6 @@ function array_find($needle, array $haystack)
     return -1;
 }	
 
-function convert_to_argv ($type,$arraytype ='',$retain=false) {
-	/* convert $argv, $_GET and $_POST to an array
-	 * this allows the running code to reference command line options in a standard array
-	 * renames $argv[0] to file_name
-	 * option $arraytype turns the array key from string numeric
-	 * if ommited the array key is converted to string
-	 * if set will return $argv converted to lower case
-	 * all array keys converted to lower case
-	 */ 
-	
-	$nums = false;
-	$filename =  pathinfo( __FILE__,PATHINFO_BASENAME);
-	foreach  ($type as $key => $value) {
-		//
-		//if ( $value == $filename ) {continue;} // strip out argv[0]
-		
-		 $value = str_replace("&",' ',$value); 
-		 
-		if (is_int($key)) {
-			// numeric key most likley cli ;)
-			if ( $value == $filename ) {
-				$key = 'file_name';
-				$cmds[$key] = $value;
-				
-				continue;
-				}
-               
-			if (!empty($arraytype)) {$nums = true;} // set numeric array keys
-				
-			
-			else {
-				// convert web style
-                
-				$value = str_replace('&',' ',$value);
-				$x = strpos($value,'=');
-				if (empty($x)) {
-					// not written cmds correct
-					//echo 'value '.$value. ' incorrectly written'.PHP_EOL;
-					//echo 'example :- '.$filename.' <option>=<value>'.PHP_EOL;
-					$key = 'file_name';
-					//goto t1;
-					//die();
-					continue;
-				}
-				
-				$key = substr($value,0,$x);
-				$value =str_replace($key.'=','',$value);
-				$nums = false;
-			}
-			}
-		$key = strtolower($key);
-		 if ($retain == true ) {
-			$cmds[$key] = $value;
-}
-else{
-		$cmds[$key] = strtolower($value);
-	}
-		
-	}
-	if ($nums == true) {
-	$cmds = array_values($cmds);
-}
-if (isset($cmds)) {
-	return $cmds;
-}
-}
 function arg($x="",$default=null,$preserve=true) {
 	
     static $arginfo = [];
@@ -1392,3 +734,16 @@ function arg($x="",$default=null,$preserve=true) {
     return $default;
 
 }
+function formatBytes($bytes, $precision = 0) { 
+    $units = array('B ', 'KB', 'MB', 'GB', 'TB'); 
+    $bytes = max($bytes, 0); 
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+    $pow = min($pow, count($units) - 1); 
+    // Uncomment one of the following alternatives
+    // $bytes /= pow(1024, $pow);
+     $bytes /= (1 << (10 * $pow)); 
+    return round($bytes, $precision) . ' ' . $units[$pow];
+    // $base = log($size, 1024);
+    //$suffixes = array('', 'K', 'M', 'G', 'T');   
+    //return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)]; 
+} 
