@@ -1,11 +1,9 @@
 <?php
    
     if (!defined('DOC_ROOT')) {define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));}
-    
     require DOC_ROOT . '/inc/functions.inc.php';  // spl_autoload_register() is contained in this file
     include DOC_ROOT. '/inc/settings.php'; // get settings
-    include DOC_ROOT.'/inc/functions.php'; 
-	$build = "2115-1732187071";
+   	$build = "2115-1732187071";
 	$time_format = "h:i:s A";  // force time display
 	if(isset($settings['TIME_ZONE']) and !empty($settings['TIME_ZONE'])) { date_default_timezone_set("{$settings['TIME_ZONE']}");} //important set the correct time zone
 	define ('settings',$settings); //globalize settings
