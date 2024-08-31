@@ -27,6 +27,8 @@ include 'inc/master.inc.php';
 //print_r (get_defined_vars());
 //print_r($all);
 //exit;
+$db_version = "2.0";
+$error = false;
 define("token",check_token());
 if(empty($backup_path)) {$backup_path = gethostname(); }
 else{
@@ -36,33 +38,44 @@ else{
 	//print_r($path_parts);
 }
 if(!empty($folder)) {$backup_path .="/$folder";}
-if($help){ echo "help set \n";
-	print_r($all);
-	exit;
+if($version){ echo "Uploader Version $db_version\n";}
+if($help){
+	help: 
+	$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
+	$table->setHeaders(array('Short', 'Long','Type','Remarks'));
+	//$table->setAlign(3, CONSOLE_TABLE_ALIGN_CENTER);
+	$table->setAlign(2, CONSOLE_TABLE_ALIGN_RIGHT);
+	//print_r($all);
+	foreach ($all as $tmp){
+		//print_r($tmp);
+		if(!isset($tmp['char'])){continue;}
+		$table->addRow(array("-{$tmp['char']}","--{$tmp['word']}" ,$tmp['type'],$tmp['help']));
+	}
+	echo $table->getTable();
+	if($error){exit;}
 }
+
 if($upload) {
 	//echo "upload set\n";
 	if(empty($path)) {
 		echo "no path supplied\n";
-		exit;
+		$error = true;
+		goto help;
 	}
 	if(empty($backup_path)) {
 		echo "no dropbox path supplied\n";
-		exit;
+		$error = true;
+		goto help;
 	}
-	//define ("backup_path","/$backup_path");
-	
+		
 	if (timed) { 
 		$path .= "/".date(settings['DATE_FORMAT'],time());
-		log_to(LOG, "detected today from date $path");
+		if(debug){log_to(LOG, "detected today from date $path");}
 	} 
 	echo "Uploading to $backup_path from $path\n"; 
-	//die("$path\n");
-	
 	if(is_dir($path)) { 
 		if(debug){echo "we are going to upload from $path to dropbox $backup_path\n";}
 		upload_directory($backup_path,$path);
-		
 	}
 	elseif(is_file($path)) {
 		if (debug){echo  "uploading file, $path to $backup_path\n";}
@@ -74,16 +87,20 @@ if($upload) {
 	} 
 	if(debug){echo "upload selected\n";}
 	if(timed) { 
-		echo "timer set\n";
+		//echo "timer set\n";
 		file_delete($backup_path,$options);
 	}
 	exit;
 }
-if($delete) {
-	echo "$delete\n";
-	file_delete($backup_path,$all);
-	exit;
+if($delete) {file_delete($backup_path,$all);}
+if($get) { download($get);}
+if ($list) {
+	if(!empty($path)){$backup_path = $path;}
+	list_files("$backup_path",true);
+	if (isset($info)) {info(true);}
 }
+if($info) {info(true);}
+exit;	
 switch (strtolower($action)){
 	case "d";
 	case "delete":
@@ -93,7 +110,7 @@ switch (strtolower($action)){
 	break;
 	case "l":
 	case "list":
-	list_files("","$backup_path",true);
+	list_files("$backup_path",true);
 	info(true);
 	break;
 	
@@ -330,7 +347,7 @@ function isdate($value) {
 	//die("checking this date $value/n");
 	if(strtotime($value)){
 		$new = strtotime("$value midnight"); 
-		log_to(LOG, "$new is a date that we want");
+		if(debug){log_to(LOG, "$new is a date that we want");}
 	}
 	$test =date_parse_from_format(settings['DATE_FORMAT'], trim($value));
 	//log_to(LOG,print_r($test,true));
@@ -427,8 +444,9 @@ function file_delete($folder,$options) {
 	else {echo "Sucess Deleted $folder\n";} 
 	
 }
-function list_files($data,$path='',$display=false ) {
+function list_files($path='',$display=false ) {
 	//list data
+	//echo "path =$path\n";
 	$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
 	$table->setHeaders(array('Type', 'Name','Size','Modified'));
 	$table->setAlign(3, CONSOLE_TABLE_ALIGN_CENTER);
@@ -503,11 +521,18 @@ function list_files($data,$path='',$display=false ) {
 function correct_file($file,$folder){
 	// make sure we have the full path
 	$file_details = pathinfo($file);
+	//print_r($file_details);
+	//die();
+	//die("$folder\n");
 	if (keep){
 		if(!defined("tld")) {define("tld",basename($file_details['dirname']));}
 		$folder="$folder/".tld;
 		//echo "folder now = $folder\n";
 		$return['upload_path'] =  "/$folder/".$file_details['filename'];
+	}
+	else {
+		$return['upload_path'] =  "/$folder/{$file_details['basename']}";
+		if(!defined("tld")) {define("tld","");} 
 	}
 	if($file_details['dirname'][0] <> "/") { 
 		$this_path = getcwd();
@@ -520,10 +545,13 @@ function correct_file($file,$folder){
 	if(!defined("tld")) {define("tld",$tld);}  // get the top level dir
 	$tld_find = strpos($file,tld);
 	$return['file'] = $file;
-	//echo "tld = $tld file is $file\n";
-	//echo "constant = ".tld.cr;
+	echo "tld = $tld file is $file\n";
+	echo "constant = ".tld.cr;
 	if($tld_find>0){$return['upload_path'] =  "/$folder/".substr($file, $tld_find+(strlen(tld)+1));} // correct the path to dropbox path + the shortened file path
+	//else { $return['upload_path'] = "/$folder/.
 	$return['upload_path'] = str_replace("//","/",$return['upload_path']);
+	//print_r($return);
+	//die();
 	return $return;
 }	
 function info($print = false) {
@@ -587,3 +615,77 @@ function space($print = false) {
 		return $return;
 	}
 }
+function download ($path) {
+	$list = check_dir($path);
+	$headr[] = 'Authorization: Bearer '.token['access_token'];
+	$headr[] = 'Content-Type:';
+	foreach($list as  $download){
+		$cdir = pathinfo(dirname(__FILE__).$download['path_display']);
+		if (!is_dir($cdir['dirname'])) {mkdir($cdir['dirname'], 0755, true);}
+		echo "Downloading {$download['path_display']}\n\n";
+		ob_start();
+		$headr[] = 'Dropbox-API-Arg: {"path":"' . $download['path_display'] . '"}';
+		$ch = curl_init(API_DOWNLOAD_URL);
+		$fp = fopen (dirname(__FILE__).$download['path_display'], 'w+'); 
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt($ch, CURLOPT_FILE, $fp);
+		curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, 'progress');
+		curl_setopt($ch, CURLOPT_NOPROGRESS, false); // needed to make progress function work 
+		$metadata = null;
+		curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $header) use (&$metadata){
+			$prefix = 'dropbox-api-result:';
+			if (strtolower(substr($header, 0, strlen($prefix))) === $prefix){$metadata = json_decode(substr($header, strlen($prefix)), true);}
+			return strlen($header);
+		}
+		);
+		$response = curl_exec($ch);
+		curl_close($ch);
+		fclose($fp);
+		ob_end_clean();
+		$x =json_decode($response,true);
+		if($metadata['content_hash'] == $download['content_hash']){	echo "Successfully Downloaded {$download['path_display']}\n";}
+		else {echo "Download of {$download['path_display']} failed\n\n";}
+	}
+}
+function check_dir($path) {
+	// are we downloading a file
+	$paths = pathinfo($path);
+	if(!isset($paths['extension'])){$search_path = $path; $isdir = true;}
+	else {$search_path = $paths['dirname'] ; $isdir = false;}
+	$filelist = list_files($search_path);
+	foreach ($filelist as $file) {
+		if ($file['.tag'] == "folder") {$return[$file['path_display']] = check_dir($file['path_display']);}
+		else {$return[] = $file;	}
+	}
+	foreach($return as $k=>$download){
+		if(count($download) >11){ 
+			foreach($download as $folder_file){
+				$return[] = $folder_file;
+			}
+			unset($return[$k]);
+		}
+	}
+	return $return;
+}
+function progress($resource,$download_size, $downloaded, $upload_size, $uploaded){
+    if($download_size > 0){
+		$dd = formatBytes($downloaded ,2);
+		$strlen = strlen($dd);
+		$dd = str_pad($dd, 9-$strlen); 
+		$ds = formatBytes($download_size,2);
+        // echo $downloaded / $download_size  * 100;
+        //echo "\033[K";
+         echo "\033[1A"; 
+         echo "\033[K";
+         //echo "Downloaded $dd of $ds\n";
+         printf("Downloaded %-8s of %-1s\n",$dd,$ds);
+		ob_flush();
+		flush();
+		//sleep(1); // just to see effect
+	}
+//echo "Done";
+ob_flush();
+flush();
+}	
