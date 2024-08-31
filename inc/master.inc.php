@@ -2,9 +2,9 @@
    
     if (!defined('DOC_ROOT')) {define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));}
     require DOC_ROOT . '/inc/functions.inc.php';  // spl_autoload_register() is contained in this file
-    include DOC_ROOT. '/inc/settings.php'; // get settings
-   	$build = "2115-1732187071";
-	$time_format = "h:i:s A";  // force time display
+    $settings = read_ini(DOC_ROOT."/inc/settings.cfg"); // read in defaults
+    //print_r($settings);
+    $build = "2115-1732187071";
 	if(isset($settings['TIME_ZONE']) and !empty($settings['TIME_ZONE'])) { date_default_timezone_set("{$settings['TIME_ZONE']}");} //important set the correct time zone
 	define ('settings',$settings); //globalize settings
 	define('cr',PHP_EOL);
@@ -42,11 +42,10 @@
 	define ('options',$options);
 	//end old command line switches
 arg("
-			-d    --debug    bool  debug the code
-			-a  --action    str     what to do
-			-au   --upload    bool     upload a fle or folder
-			-ad   --delete    bool     delete a file or folder
-			-b  --backup-path    str     backup path
+			-x    --debug    bool  debug the code
+			-u   --upload    bool     upload a fle or folder
+			-d   --delete    bool     delete a file or folder
+			-b  --backup-path    str     backup path defaults to system host name
             -f  --folder    str     folder to work with
 			-k  --keep  bool     add the file directory to the dropbox path
 			-h  --help      bool  help (this screen)
@@ -54,12 +53,13 @@ arg("
 			-p  --path  str  file set to work with
 			-t  --timed  bool  create a directory based on current date 
 			-r  --retain  int  retain old backups for X days
-			-V  --version   bool    show version and exit
-			  
+			-v  --version   bool    show Uploader version 
+			-l   --list   bool  list files may need -p set
+			-i  --info   bool  Show Dropbox Infromation
+			-g  --get   str   get (Download) a file from dropbox full dropbox path required
 	");
 	$all = arg(); 
 	ksort($all);
-	$action = arg("action");
 	$backup_path = arg("backup-path");
 	$path = arg("path");
 	$folder = arg("folder");
@@ -72,7 +72,11 @@ arg("
     $upload = arg("upload");
     $help = arg("help");
     define('debug',$debug);
+    $version = arg("version");
     $timed = arg("timed");
+    $list = arg("list");
+    $info = arg("info");
+    $get = arg("get");
     define ("timed",$timed);
     define ("retain",arg("retain"));
     define("keep",arg("keep"));

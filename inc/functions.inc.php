@@ -746,4 +746,35 @@ function formatBytes($bytes, $precision = 0) {
     // $base = log($size, 1024);
     //$suffixes = array('', 'K', 'M', 'G', 'T');   
     //return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)]; 
-} 
+}
+ 
+function read_ini($file){
+	$a = 0;
+	$m = 0;
+	$tmp = file_get_contents($file);
+	$records = explode(PHP_EOL,trim($tmp));
+	foreach ($records as $entry) {
+		$entry = preg_replace('/\s+/', '', $entry);
+		$tmp = explode("=",$entry);
+		if(str_starts_with(trim($entry),"#")) { continue;} // a comment line
+		if(!isset($tmp[1])) { continue;} //  a bad line not split with an = sign
+		$x = strpos($tmp[1],"#"); // is there a remark after the value  ?
+		if ($x>0) { $tmp[1] = substr($tmp[1], 0, $x);} //  cut out the remark
+		$more = explode(",",$tmp[1]); // more than one value in the line
+		$m = count($more); // check for more than one setting
+		if($m >1){ 
+			//echo "more found \n".print_r($more,true);
+			foreach ($more as $value) {
+				//echo "the value is $value\n";
+				$settings[$tmp[0]][] = trim($value); // make an array of these settings
+				unset ($more);
+			}
+		}
+		else{
+			$settings[strtoupper($tmp[0])] = $tmp[1];
+			//print_r($tmp);
+		}
+	}
+	ksort($settings);	
+	return $settings;
+}
