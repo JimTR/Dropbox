@@ -449,10 +449,7 @@ function file_delete($folder,$options) {
 function list_files($path='',$display=false ) {
 	//list data
 	//echo "path =$path\n";
-	$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
-	$table->setHeaders(array('Type', 'Name','Size','Modified'));
-	$table->setAlign(3, CONSOLE_TABLE_ALIGN_CENTER);
-	$table->setAlign(2, CONSOLE_TABLE_ALIGN_RIGHT);
+	
 	if(empty($path) || debug) {echo 'path set to root'.cr;}
 	else {if($path[0] <> '/') {$path ='/'.$path;}}
 	if($path == "/") {$path="";}
@@ -475,27 +472,36 @@ function list_files($path='',$display=false ) {
 	//print_r($y); 
 	if (empty($path) ) { $path='dDropBox';}
 	if(isset($y['entries'])){
-		$blank = array("","","","");	
+		$blank = array("","","");	
 		$lines = count($y['entries']);
 		if($lines==1){$table->addRow($blank);}
 		$total_size=0;
 		if(!$display){return $y['entries'];}
+		$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
+		$table->setHeaders(array('Name','Size','Modified'));
+		//$table->setAlign(2, CONSOLE_TABLE_ALIGN_CENTER);
+		//$table->setAlign(1, CONSOLE_TABLE_ALIGN_RIGHT);
 		foreach ($y['entries'] as $entry) {
 			if ($entry['.tag'] == 'file') {
 				$path_parts = pathinfo($entry['path_display']);
 				$basename = $path_parts['basename'];
+				$basename = cc->convert("%g$basename%n");
+				$date = date('d-m-Y  H:i:s',strtotime($entry['server_modified']));
+				$size = trim(formatBytes($entry['size'],2));
 				$total_size  +=$entry['size'];
-				$table->addRow(array($entry['.tag'], cc->convert("%b$basename%n"),trim(formatBytes($entry['size'],2)),date('d-m-Y  H:i:s',strtotime($entry['server_modified']))));
+				$table->addRow(array($basename,$size,$date));
 			}
 			else {
 				$path_parts = pathinfo($entry['path_display']);
 				$basename = $path_parts['basename'];
-				$table->addRow(array($entry['.tag'], cc->convert("%g$basename%n"),'N/A','N/A'));
+				$basename = cc->convert("%b$basename%n");
+				$table->addRow(array( $basename,'Folder','N/A'));
 			}
 		}
 		if ($total_size >0 || !isset($total_size)) {
 			$total_size = formatBytes($total_size,2);
-			$table->addRow(array('Total','',cc->convert("%Y$total_size%n"),''));
+			$total = cc->convert("%YTotal%n");
+			$table->addRow(array($total,cc->convert("%Y$total_size%n"),''));
 		}
 		echo $table->getTable();
 	}
