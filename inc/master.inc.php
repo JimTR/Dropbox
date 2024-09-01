@@ -3,7 +3,7 @@
     if (!defined('DOC_ROOT')) {define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));}
     require DOC_ROOT . '/inc/functions.inc.php';  // spl_autoload_register() is contained in this file
     $settings = read_ini(DOC_ROOT."/inc/settings.cfg"); // read in defaults
-    //print_r($settings);
+    define("working_dir" , getcwd());
     $build = "2115-1732187071";
 	if(isset($settings['TIME_ZONE']) and !empty($settings['TIME_ZONE'])) { date_default_timezone_set("{$settings['TIME_ZONE']}");} //important set the correct time zone
 	define ('settings',$settings); //globalize settings
