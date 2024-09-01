@@ -85,9 +85,10 @@ if($upload) {
 		echo "file or directory $path not found Terminating\n";
 		exit;
 	} 
-	if(debug){echo "upload selected\n";}
+	if(debug){echo "upload selected ($backup_path)\n";}
 	if(timed) { 
 		//echo "timer set\n";
+		
 		file_delete($backup_path,$options);
 	}
 	exit;
@@ -376,7 +377,8 @@ function file_delete($folder,$options) {
 		echo "Checking for folders older than $remove_date in folder $folder\n";
 		
 		if(empty($folder)) {echo "no folder set\n";}
-		$fl = list_files($timed,$folder);
+		
+		$fl = list_files($folder,false);
 		//print_r($fl);
 		$dtotal =0;
 		foreach ($fl as $file) {
@@ -451,13 +453,8 @@ function list_files($path='',$display=false ) {
 	$table->setHeaders(array('Type', 'Name','Size','Modified'));
 	$table->setAlign(3, CONSOLE_TABLE_ALIGN_CENTER);
 	$table->setAlign(2, CONSOLE_TABLE_ALIGN_RIGHT);
-		if(empty($path)) {
-		//echo 'path set to root'.cr;
-	}
-	else {
-		// check
-		if($path[0] <> '/') {$path ='/'.$path;}
-	}
+	if(empty($path) || debug) {echo 'path set to root'.cr;}
+	else {if($path[0] <> '/') {$path ='/'.$path;}}
 	if($path == "/") {$path="";}
 	//die("$path\n");
 	$headr[] = "Authorization: Bearer ".token['access_token'];
@@ -482,36 +479,25 @@ function list_files($path='',$display=false ) {
 		$lines = count($y['entries']);
 		if($lines==1){$table->addRow($blank);}
 		$total_size=0;
+		if(!$display){return $y['entries'];}
 		foreach ($y['entries'] as $entry) {
-			//echo print_r($entry,true).cr;
 			if ($entry['.tag'] == 'file') {
 				$path_parts = pathinfo($entry['path_display']);
-				//echo 'path parts'.cr.print_r($path_parts,true).cr;
 				$basename = $path_parts['basename'];
-				//echo $entry['.tag'].' '.$path_parts['basename'].' '. formatBytes($entry['size'],2).cr;
 				$total_size  +=$entry['size'];
 				$table->addRow(array($entry['.tag'], cc->convert("%b$basename%n"),trim(formatBytes($entry['size'],2)),date('d-m-Y  H:i:s',strtotime($entry['server_modified']))));
 			}
 			else {
 				$path_parts = pathinfo($entry['path_display']);
-				//echo 'path parts'.cr.print_r($path_parts,true).cr;
 				$basename = $path_parts['basename'];
 				$table->addRow(array($entry['.tag'], cc->convert("%g$basename%n"),'N/A','N/A'));
-				//echo $entry['.tag'].' '.$path_parts['basename'].cr;
 			}
 		}
-		//if($data===false){
-		//if (TERM){echo "\nContents of ".cc->convert("%y".substr($path,1)."%n").cr;}
-		//else {echo "\nContents of ".substr($path,1)."\n";}
-			if ($total_size >0 || !isset($total_size)) {
-				$total_size = formatBytes($total_size,2);
-				$table->addRow(array('Total','',cc->convert("%Y$total_size%n"),''));
-			}
-			//echo $table->getTable();
-		//}
-		//$table->addRow($blank);
-		if ($display){echo $table->getTable();}
-		return $y['entries'];
+		if ($total_size >0 || !isset($total_size)) {
+			$total_size = formatBytes($total_size,2);
+			$table->addRow(array('Total','',cc->convert("%Y$total_size%n"),''));
+		}
+		echo $table->getTable();
 	}
 	else {
 		if(TERM) {echo 'Could not find '.cc->convert("%y".substr($path,1)."%n").cr;}
@@ -545,8 +531,8 @@ function correct_file($file,$folder){
 	if(!defined("tld")) {define("tld",$tld);}  // get the top level dir
 	$tld_find = strpos($file,tld);
 	$return['file'] = $file;
-	echo "tld = $tld file is $file\n";
-	echo "constant = ".tld.cr;
+	if(debug){echo "tld = $tld file is $file\n";}
+	//echo "constant = ".tld.cr;
 	if($tld_find>0){$return['upload_path'] =  "/$folder/".substr($file, $tld_find+(strlen(tld)+1));} // correct the path to dropbox path + the shortened file path
 	//else { $return['upload_path'] = "/$folder/.
 	$return['upload_path'] = str_replace("//","/",$return['upload_path']);
@@ -620,13 +606,13 @@ function download ($path) {
 	$headr[] = 'Authorization: Bearer '.token['access_token'];
 	$headr[] = 'Content-Type:';
 	foreach($list as  $download){
-		$cdir = pathinfo(dirname(__FILE__).$download['path_display']);
+		$cdir = pathinfo(working_dir.$download['path_display']);
 		if (!is_dir($cdir['dirname'])) {mkdir($cdir['dirname'], 0755, true);}
 		echo "Downloading {$download['path_display']}\n\n";
 		ob_start();
 		$headr[] = 'Dropbox-API-Arg: {"path":"' . $download['path_display'] . '"}';
 		$ch = curl_init(API_DOWNLOAD_URL);
-		$fp = fopen (dirname(__FILE__).$download['path_display'], 'w+'); 
+		$fp = fopen (working_dir.$download['path_display'], 'w+'); 
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $headr);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
