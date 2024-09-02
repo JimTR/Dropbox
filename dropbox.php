@@ -27,16 +27,10 @@ include 'inc/master.inc.php';
 //print_r (get_defined_vars());
 //print_r($all);
 //exit;
-$db_version = "2.0";
+$db_version = "2.0.1";
 $error = false;
 define("token",check_token());
-if(empty($backup_path)) {$backup_path = gethostname(); }
-else{
-	//echo "$backup_path\n";
-	$path_parts = pathinfo($backup_path);
-	if(strtolower($path_parts['dirname']) =="local") {$path_parts['dirname'] =  gethostname(); }
-	//print_r($path_parts);
-}
+if(empty($backup_path)) {$backup_path = gethostname(); } // use this if every thing else is empty
 if(!empty($folder)) {$backup_path .="/$folder";}
 if($version){ echo "Uploader Version $db_version\n";}
 if($help){
@@ -96,7 +90,7 @@ if($upload) {
 if($delete) {file_delete($backup_path,$all);}
 if($get) { download($get);}
 if ($list) {
-	if(!empty($path)){$backup_path = $path;}
+	if(!empty($path)){$backup_path .= "/$path";}
 	list_files("$backup_path",true);
 	if (isset($info)) {info(true);}
 }
@@ -271,7 +265,7 @@ function dirToArray($dir) {
 		$csize = filesize("$targetpath/$chunk");
 		$dsize = formatBytes($csize,2);
 		$chunk_base = pathinfo($chunk,PATHINFO_FILENAME);
-		echo "\tUploading $chunk_base ";
+		echo "Uploading $chunk_base ";
 		if (debug == true) {echo "Upload Size $dsize ";}
 		echo "($chunk_num/$chunk_total)";
 		$headr[] = 'Authorization: Bearer '.token['access_token'];
@@ -392,7 +386,7 @@ function file_delete($folder,$options) {
 				//echo "this one has to go\n";
 				if ($remove > $check_date) {
 					//echo "this line $folder/{$file['name']}\n";
-					$rf = list_files($timed,$folder.'/'.$file['name']);
+					$rf = list_files("$folder/{$file['name']}",$timed);
 					//print_r($rf);
 					foreach ($rf as $tmp) {
 						if ($tmp['.tag'] == 'file' ) {
@@ -474,13 +468,14 @@ function list_files($path='',$display=false ) {
 	if(isset($y['entries'])){
 		$blank = array("","","");	
 		$lines = count($y['entries']);
-		if($lines==1){$table->addRow($blank);}
+		
 		$total_size=0;
 		if(!$display){return $y['entries'];}
 		$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
 		$table->setHeaders(array('Name','Size','Modified'));
 		//$table->setAlign(2, CONSOLE_TABLE_ALIGN_CENTER);
 		//$table->setAlign(1, CONSOLE_TABLE_ALIGN_RIGHT);
+		if($lines==1){$table->addRow($blank);}
 		foreach ($y['entries'] as $entry) {
 			if ($entry['.tag'] == 'file') {
 				$path_parts = pathinfo($entry['path_display']);
