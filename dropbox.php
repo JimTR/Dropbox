@@ -82,8 +82,7 @@ if($upload) {
 	if(debug){echo "upload selected ($backup_path)\n";}
 	if(timed) { 
 		//echo "timer set\n";
-		
-		file_delete($backup_path,$options);
+		file_delete($backup_path,false);
 	}
 	exit;
 }
@@ -371,9 +370,8 @@ function file_delete($folder,$options) {
 		echo "Checking for folders older than $remove_date in folder $folder\n";
 		
 		if(empty($folder)) {echo "no folder set\n";}
-		
 		$fl = list_files($folder,false);
-		//print_r($fl);
+		print_r($fl);
 		$dtotal =0;
 		foreach ($fl as $file) {
 			$check_date=0;
@@ -386,7 +384,7 @@ function file_delete($folder,$options) {
 				//echo "this one has to go\n";
 				if ($remove > $check_date) {
 					//echo "this line $folder/{$file['name']}\n";
-					$rf = list_files("$folder/{$file['name']}",$timed);
+					$rf = list_files("$folder/{$file['name']}",false);
 					//print_r($rf);
 					foreach ($rf as $tmp) {
 						if ($tmp['.tag'] == 'file' ) {
