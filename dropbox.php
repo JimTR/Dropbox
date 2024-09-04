@@ -371,7 +371,7 @@ function file_delete($folder,$options) {
 		
 		if(empty($folder)) {echo "no folder set\n";}
 		$fl = list_files($folder,false);
-		print_r($fl);
+		//print_r($fl);
 		$dtotal =0;
 		foreach ($fl as $file) {
 			$check_date=0;
