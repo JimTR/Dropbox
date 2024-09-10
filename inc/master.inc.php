@@ -56,6 +56,7 @@ arg("
 			-v  --version   bool    show Uploader version 
 			-l   --list   bool  list files may need -p set
 			-i  --info   bool  Show Dropbox Infromation
+			-s  --space  bool  get Dropbox usage
 			-g  --get   str   get (Download) a file from dropbox full dropbox path required
 	");
 	$all = arg(); 
@@ -77,6 +78,7 @@ arg("
     $list = arg("list");
     $info = arg("info");
     $get = arg("get");
+    $space = arg("space");
     define ("timed",$timed);
     define ("retain",arg("retain"));
     define("keep",arg("keep"));

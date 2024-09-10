@@ -97,6 +97,7 @@ if ($list) {
 	if (isset($info)) {info(true);}
 }
 if($info) {info(true);}
+if($space) {space(true);}
 exit;	
 
 function upload_directory($folder,$directory) {
@@ -397,7 +398,7 @@ function file_delete($folder,$options) {
 			}
 		}
 		$space = space();
-		echo 'Total Deleted  From Dropbox '.formatBytes($dtotal,2)." Space remaining on Dropbox ".formatBytes($space['free'],2).cr;
+		echo 'Total Deleted  From Dropbox '.formatBytes($dtotal,2)." Space remaining on Dropbox {$space['free']}\n";
 		return; 
 	}
 	//echo "folder is /$folder (no Time)\n";
