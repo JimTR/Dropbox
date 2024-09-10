@@ -42,9 +42,9 @@
 	define ('options',$options);
 	//end old command line switches
 arg("
-			-x    --debug    bool  debug the code
+			-d    --debug    bool  debug the code
 			-u   --upload    bool     upload a fle or folder
-			-d   --delete    bool     delete a file or folder
+			-e   --erease    bool     erase a file or folder
 			-b  --backup-path    str     backup path defaults to system host name
             -f  --folder    str     folder to work with
 			-k  --keep  bool     add the file directory to the dropbox path
@@ -63,7 +63,7 @@ arg("
 	$backup_path = arg("backup-path");
 	$path = arg("path");
 	$folder = arg("folder");
-	$delete = arg("delete");
+	$erase = arg("erase");
 	$version = arg("version");
 	$verbose = arg("verbose");
 	$resovle = arg("resolve");

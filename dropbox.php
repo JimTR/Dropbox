@@ -27,12 +27,15 @@ include 'inc/master.inc.php';
 //print_r (get_defined_vars());
 //print_r($all);
 //exit;
+//print_r($argv);
+$build = filemtime($argv[0]);
+$runfile = basename($argv[0]);
 $db_version = "2.0.1";
 $error = false;
 define("token",check_token());
 if(empty($backup_path)) {$backup_path = gethostname(); } // use this if every thing else is empty
 if(!empty($folder)) {$backup_path .="/$folder";}
-if($version){ echo "Uploader Version $db_version\n";}
+if($version){ echo "$runfile $db_version - $build\n";}
 if($help){
 	help: 
 	$table = new Table(CONSOLE_TABLE_ALIGN_LEFT, borders, 1, null, true);
@@ -86,7 +89,7 @@ if($upload) {
 	}
 	exit;
 }
-if($delete) {file_delete($backup_path,$all);}
+if($erase) {file_delete($backup_path,$all);}
 if($get) { download($get);}
 if ($list) {
 	if(!empty($path)){$backup_path .= "/$path";}
@@ -95,24 +98,6 @@ if ($list) {
 }
 if($info) {info(true);}
 exit;	
-switch (strtolower($action)){
-	case "d";
-	case "delete":
-	//echo "hit delete\n";
-	//echo "backup_path = $backup_path\n";
-	file_delete($backup_path,$all);
-	break;
-	case "l":
-	case "list":
-	list_files("$backup_path",true);
-	info(true);
-	break;
-	
-	case "help":
-	break;
-	default:
-	echo cc->convert("%RWarning%n"). ' no -a switch set'.cr;
-} 
 
 function upload_directory($folder,$directory) {
 	/* upload complete folder 
@@ -316,7 +301,7 @@ function rrmdir($src) {
     $dir = opendir($src);
     while(false !== ( $file = readdir($dir)) ) {
         if (( $file != '.' ) && ( $file != '..' )) {
-            $full = $src . '/' . $file;
+            $full = "$src /$file";
             if ( is_dir($full) ) {rrmdir($full);}
             else {unlink($full);}
         }
@@ -353,7 +338,8 @@ function isdate($value) {
 }
 function file_delete($folder,$options) {
 	// delete stuff
-	$error = cc->convert("%RError%n");
+	$error = "Error";
+	if (TERM){$error = cc->convert("%R$error%n");}
 	$timed = false;
 	if($folder[0] <> "/") { $folder="/$folder";}
 	if(timed){$timed = true;}
@@ -368,7 +354,6 @@ function file_delete($folder,$options) {
 		else {$remove = strtotime('-'.settings['FILE_RETAIN'].' day', $today-82800);}
 		$remove_date = date("d-m-y",$remove);
 		echo "Checking for folders older than $remove_date in folder $folder\n";
-		
 		if(empty($folder)) {echo "no folder set\n";}
 		$fl = list_files($folder,false);
 		//print_r($fl);
@@ -392,10 +377,7 @@ function file_delete($folder,$options) {
 						}
 					}
 					$erase =  "$folder/{$file['name']}";
-					//echo "the folder is $folder\n";
-					echo "deleting $erase (".formatBytes($dsize,2)." from Dropbox)\n";
-					//die("this is what we are doing $erase\n");
-					//exit;
+					echo "deleting $erase (".formatBytes($dsize,2).") from Dropbox\n";
 					unset($headr);
 					$postData = array();
 					$headr[] = 'Authorization: Bearer '.token['access_token'];
@@ -408,14 +390,14 @@ function file_delete($folder,$options) {
 					curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
 					curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 					$response = curl_exec($ch);
-					//echo $response.cr;
 					curl_close($ch);
 					$dtotal =$dtotal+$dsize;
 				}
 				else {echo "{$file['name']} is still a current folder on Dropbox\n";}
 			}
 		}
-		echo 'Total Deleted  From Dropbox '.formatBytes($dtotal,2).cr;
+		$space = space();
+		echo 'Total Deleted  From Dropbox '.formatBytes($dtotal,2)." Space remaining on Dropbox ".formatBytes($space['free'],2).cr;
 		return; 
 	}
 	//echo "folder is /$folder (no Time)\n";
@@ -473,7 +455,6 @@ function list_files($path='',$display=false ) {
 		$table->setHeaders(array('Name','Size','Modified'));
 		//$table->setAlign(2, CONSOLE_TABLE_ALIGN_CENTER);
 		//$table->setAlign(1, CONSOLE_TABLE_ALIGN_RIGHT);
-		if($lines==1){$table->addRow($blank);}
 		foreach ($y['entries'] as $entry) {
 			if ($entry['.tag'] == 'file') {
 				$path_parts = pathinfo($entry['path_display']);
@@ -496,6 +477,7 @@ function list_files($path='',$display=false ) {
 			$total = cc->convert("%YTotal%n");
 			$table->addRow(array($total,cc->convert("%Y$total_size%n"),''));
 		}
+		if($lines==1){$table->addRow($blank);}
 		echo $table->getTable();
 	}
 	else {
