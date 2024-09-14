@@ -209,7 +209,7 @@ function dirToArray($dir) {
 	$abs_path_parts = pathinfo($file);
 	$size = filesize($file);
 	$hsize = formatBytes($size,2);
-	if (debug == true) { 
+	if (debug) { 
 		echo  "\tdb_upload_large_file: current working directory $cd\n";
 		echo  "\tdb_upload_large_file: chunk target path $targetpath\n";
 		echo "\tdb_upload_large_file: File breakdown \n";
@@ -269,11 +269,11 @@ function dirToArray($dir) {
 		curl_close($ch);
 		$offset = $offset+$csize;
 		$hoffset = formatBytes($offset,2);
-		echo " $hoffset of $hsize uploaded".cr;
+		echo " $hoffset of $hsize uploaded\n";
 		if(debug == true) {
-			echo "\t$chunk Headers".cr;
+			echo "\t$chunk Headers\n";
 			foreach ($headr as $header){
-				echo "\t$header".cr;
+				echo "\t$header\n";
 			}
 		}
 		sleep(1);
@@ -295,7 +295,11 @@ function dirToArray($dir) {
 		else {echo ' File has not uploaded correctly';}
 	}
 	rrmdir($targetpath); // clean up
-	echo "$chunk_base succesfully uploaded\n" ; //do something with this		
+	if(TERM){
+		$chunck_base = cc->convert("%y{$chunk_base}%n");
+		$write_to = cc->convert("%g{$write_to}%n");
+	}	
+	echo "$chunk_base uploaded to $write_to\n" ; //do something with this		
 }
 
 function rrmdir($src) {
