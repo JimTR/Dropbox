@@ -302,7 +302,7 @@ function rrmdir($src) {
     $dir = opendir($src);
     while(false !== ( $file = readdir($dir)) ) {
         if (( $file != '.' ) && ( $file != '..' )) {
-            $full = "$src /$file";
+            $full = "$src$file";
             if ( is_dir($full) ) {rrmdir($full);}
             else {unlink($full);}
         }
@@ -570,10 +570,11 @@ function space($print = false) {
 	$quota = formatBytes($x['allocation']['allocated']);
 	if ($print) {
 	$cc = new Color();
-	$table = new Table(CONSOLE_TABLE_ALIGN_RIGHT, '', 1, null, true);
-	$table->addRow(array('Quota', $cc->convert("%r$quota%n")));
-	$table->addRow(array('Used', $cc->convert("%r$used%n")));
-	$table->addRow(array('Free', $cc->convert("%r$free%n")));
+	$table = new Table(CONSOLE_TABLE_ALIGN_RIGHT, borders, 1, null, true);
+	$table->setHeaders(array('Item', 'Value'));
+	$table->addRow(array('Quota', $cc->convert("%g$quota%n")));
+	$table->addRow(array('Used', $cc->convert("%g$used%n")));
+	$table->addRow(array('Free', $cc->convert("%g$free%n")));
 	echo 'DropBox Statistics'.cr.$table->getTable();
 	}
 	else {
