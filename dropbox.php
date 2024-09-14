@@ -249,8 +249,12 @@ function dirToArray($dir) {
 		$fp = fopen("$targetpath/$chunk", 'rb');
 		$csize = filesize("$targetpath/$chunk");
 		$dsize = formatBytes($csize,2);
-		$chunk_base = pathinfo($chunk,PATHINFO_FILENAME);
-		echo "Uploading $chunk_base ";
+		if(TERM){
+			$chunk_base1 = pathinfo($chunk,PATHINFO_FILENAME);
+			$chunk_base1 = cc->convert("%y$chunk_base1%n");
+		}
+		else{$chunk_base1 = pathinfo($chunk,PATHINFO_FILENAME);}
+		echo "Uploading $chunk_base1 ";
 		if (debug == true) {echo "Upload Size $dsize ";}
 		echo "($chunk_num/$chunk_total)";
 		$headr[] = 'Authorization: Bearer '.token['access_token'];
@@ -296,7 +300,7 @@ function dirToArray($dir) {
 	}
 	rrmdir($targetpath); // clean up
 	if(TERM){
-		$chunck_base = cc->convert("%y{$chunk_base}%n");
+		$chunk_base = cc->convert("%y{$chunk_base}%n");
 		$write_to = cc->convert("%g{$write_to}%n");
 	}	
 	echo "$chunk_base uploaded to $write_to\n" ; //do something with this		
