@@ -45,7 +45,7 @@
 arg("
 			-d    --debug    bool  debug the code
 			-u   --upload    bool     upload a fle or folder
-			-e   --erease    bool     erase a file or folder
+			-e   --erase    bool     erase a file or folder
 			-b  --backup-path    str     backup path defaults to system host name
             -f  --folder    str     folder to work with
 			-k  --keep  bool     add the file directory to the dropbox path
