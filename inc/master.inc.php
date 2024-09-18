@@ -2,7 +2,8 @@
    
     if (!defined('DOC_ROOT')) {define('DOC_ROOT', realpath(dirname(__FILE__) . '/../'));}
     require DOC_ROOT . '/inc/functions.inc.php';  // spl_autoload_register() is contained in this file
-    $settings = read_ini(DOC_ROOT."/inc/settings.cfg"); // read in defaults
+    //$settings = read_ini(DOC_ROOT."/inc/settings.cfg"); // read in defaults
+    $settings= array_change_key_case(parse_ini_file(DOC_ROOT."/inc/settings.cfg",true), CASE_UPPER);
     define("working_dir" , getcwd());
     $build = "2115-1732187071";
 	if(isset($settings['TIME_ZONE']) and !empty($settings['TIME_ZONE'])) { date_default_timezone_set("{$settings['TIME_ZONE']}");} //important set the correct time zone
@@ -53,7 +54,7 @@ arg("
 			-p  --path  str  file set to work with
 			-t  --timed  bool  create a directory based on current date 
 			-r  --retain  int  retain old backups for X days
-			-v  --version   bool    show Uploader version 
+			-v  --version   bool    show Utility version 
 			-l   --list   bool  list files may need -p set
 			-i  --info   bool  Show Dropbox Infromation
 			-s  --space  bool  get Dropbox usage
